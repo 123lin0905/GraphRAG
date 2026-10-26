@@ -5,7 +5,8 @@
     <!-- 加载 / 占位状态 -->
     <transition name="fade">
       <div v-if="state !== 'ready'" class="sv-overlay">
-        <div class="sv-ring">
+        <div v-if="state === 'pending'" class="sv-pending-icon"><el-icon><Camera /></el-icon></div>
+        <div v-else class="sv-ring">
           <svg viewBox="0 0 120 120" class="ring-svg">
             <circle cx="60" cy="60" r="52" class="track" />
             <circle cx="60" cy="60" r="52" class="bar" :style="{ strokeDashoffset: 327 - (327 * shownProgress) / 100 }" />
@@ -20,11 +21,15 @@
 
     <!-- 信息条 -->
     <div class="sv-badges">
-      <span v-if="usingSample" class="chip red" title="该文物的 3DGS 模型为占位地址，当前加载公开示例模型用于演示">
+      <span v-if="demo" class="chip red" title="公开示例高斯泼溅场景，并非三星堆文物，仅用于演示 3DGS 实时渲染技术">
+        <el-icon><Warning /></el-icon>3DGS 渲染技术演示 · 非三星堆文物
+      </span>
+      <span v-else-if="usingSample" class="chip red" title="该文物的 3DGS 模型为占位地址，当前加载公开示例模型用于演示">
         <el-icon><Warning /></el-icon>示例模型（原模型为占位地址）
       </span>
       <span v-else-if="state === 'ready'" class="chip jade"><el-icon><CircleCheck /></el-icon>3DGS 实时渲染</span>
-      <span v-if="format" class="chip">{{ format.toUpperCase() }}</span>
+      <span v-else-if="state === 'pending'" class="chip"><el-icon><Clock /></el-icon>模型采集中</span>
+      <span v-if="format && state !== 'pending'" class="chip">{{ format.toUpperCase() }}</span>
     </div>
     <div v-if="state === 'ready' && showTips" class="sv-tips">
       <span><b>左键</b> 旋转</span><span><b>右键</b> 平移</span><span><b>滚轮</b> 缩放</span>
@@ -46,11 +51,18 @@ const props = withDefaults(
     format?: string
     showTips?: boolean
     autoStart?: boolean
+    /** 原模型不可访问时是否回退到公开示例（默认否：显示“模型采集中”） */
+    fallbackToSample?: boolean
+    /** 技术演示模式：直接加载公开示例场景并明确标注“非三星堆文物” */
+    demo?: boolean
+    /** 采集中状态的说明文字 */
+    pendingText?: string
   }>(),
-  { showTips: true, autoStart: true }
+  { showTips: true, autoStart: true, fallbackToSample: false, demo: false }
 )
+const emit = defineEmits<{ (e: 'status', s: string): void }>()
 
-type State = 'idle' | 'checking' | 'loading' | 'ready' | 'error' | 'nowebgl'
+type State = 'idle' | 'checking' | 'loading' | 'ready' | 'error' | 'nowebgl' | 'pending'
 const host = ref<HTMLDivElement>()
 const state = ref<State>('idle')
 const progress = ref(0)
@@ -67,13 +79,15 @@ const stateTitle = computed(() => {
     case 'loading': return `模型加载中 ${Math.round(progress.value)}%`
     case 'error': return '模型暂不可用'
     case 'nowebgl': return '当前环境不支持 WebGL'
+    case 'pending': return '模型采集中'
     default: return '3DGS 模型占位'
   }
 })
 const stateSub = computed(() => {
   switch (state.value) {
     case 'checking': return '校验 model_3d.model_url 是否可访问…'
-    case 'loading': return usingSample.value ? '原模型为占位地址，正在加载公开示例高斯泼溅场景' : '正在流式解析高斯基元并排序'
+    case 'loading': return props.demo ? '正在加载公开示例高斯泼溅场景（非三星堆文物）' : usingSample.value ? '原模型为占位地址，正在加载公开示例高斯泼溅场景' : '正在流式解析高斯基元并排序'
+    case 'pending': return props.pendingText || '该文物的三维模型尚在采集与训练中，完成后将在此展示真实模型'
     case 'error': return errMsg.value || '网络异常或模型格式不受支持'
     case 'nowebgl': return '请使用支持 WebGL2 的现代浏览器（Chrome / Edge / Safari）'
     default: return '等待加载'
@@ -127,8 +141,10 @@ async function load() {
   usingSample.value = false
   errMsg.value = ''
   state.value = 'checking'
-  let url = props.url || ''
-  if (!url || !(await reachable(url))) {
+  let url = props.demo ? APP_CONFIG.sampleSplatUrl : props.url || ''
+  if (!props.demo && (!url || !(await reachable(url)))) {
+    if (token !== loadToken) return
+    if (!props.fallbackToSample) { state.value = 'pending'; return }
     url = APP_CONFIG.sampleSplatUrl
     usingSample.value = true
   }
@@ -137,7 +153,7 @@ async function load() {
   try {
     const GS: any = await import('@mkkellogg/gaussian-splats-3d')
     if (token !== loadToken || !host.value) return
-    const cam = usingSample.value
+    const cam = usingSample.value || props.demo
       ? ((window as any).__SXD_SAMPLE_CAMERA || APP_CONFIG.sampleCamera)
       : { position: props.cameraPosition || [0, 0, 3], lookAt: props.cameraTarget || [0, 0, 0], up: [0, -1, 0] }
     viewer = new GS.Viewer({
@@ -178,7 +194,8 @@ function toggleRotate() {
   if (viewer?.controls) viewer.controls.autoRotate = autoRotate.value
 }
 
-watch(() => props.url, () => load())
+watch(state, (v) => emit('status', v))
+watch(() => [props.url, props.demo], () => load())
 onMounted(() => { if (props.autoStart) load() })
 onBeforeUnmount(() => { loadToken++; disposeViewer() })
 defineExpose({ reload: load })
@@ -197,6 +214,8 @@ defineExpose({ reload: load })
 .sv-ring .ring-svg { position: absolute; inset: 0; transform: rotate(-90deg); }
 .sv-ring .track { fill: none; stroke: rgba(201,164,92,.12); stroke-width: 3; }
 .sv-ring .bar { fill: none; stroke: var(--gold); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 327; transition: stroke-dashoffset .4s var(--ease); filter: drop-shadow(0 0 6px rgba(201,164,92,.7)); }
+.sv-pending-icon { width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; font-size: 38px; color: var(--gold-light); margin-bottom: 8px;
+  border: 1px dashed rgba(201,164,92,.45); background: rgba(201,164,92,.06); }
 .sv-title { font-size: 18px; color: var(--gold-light); letter-spacing: .15em; }
 .sv-sub { color: var(--text-3); font-size: 13px; max-width: 360px; }
 .sv-badges { position: absolute; top: 14px; left: 14px; z-index: 4; display: flex; gap: 8px; flex-wrap: wrap; }

@@ -58,6 +58,7 @@ public class KnowledgeGraphServiceImpl implements KnowledgeGraphService {
         TYPE_LABELS.put("PERSON", "人物");
         TYPE_LABELS.put("LITERATURE", "文献");
         TYPE_LABELS.put("TECH", "工艺");
+        TYPE_LABELS.put("CATEGORY", "分类");
     }
 
     private final KgEntityMapper entityMapper;

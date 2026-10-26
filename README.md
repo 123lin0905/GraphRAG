@@ -1,7 +1,6 @@
 # 基于3D高斯泼溅与GraphRAG的三星堆文物数字孪生与智能导览系统
 
-> 第一阶段：数据库设计 + Java 后端服务
-> 后续阶段：Vue3 + Element Plus + ECharts 前端、3DGS Web 查看器（本仓库暂不包含）
+> 包含：数据库设计 + Java 后端服务 + Vue3 / Element Plus / ECharts 前端 + 3D 查看器（GLB 真实三维扫描 + 3DGS 高斯泼溅）
 
 ## 一、项目简介
 
@@ -106,16 +105,16 @@ sanxingdui/
 | --- | --- |
 | 系统权限（6） | `sys_user` 用户、`sys_role` 角色、`sys_permission` 权限、`sys_user_role`、`sys_role_permission`、`sys_operation_log` 操作日志 |
 | 场馆空间（3） | `museum` 博物馆、`exhibition_hall` 展厅、`showcase` 展柜（含坐标与温湿度） |
-| 文物本体（8） | `artifact_category` 分类（两级）、`dynasty_period` 年代/文化期、`excavation_pit` 祭祀坑、`material` 材质、`artifact` 文物、`artifact_image` 图片、`model_3d` 3DGS 模型、`restoration_record` 修复记录 |
+| 文物本体（8） | `artifact_category` 分类（两级）、`dynasty_period` 年代/文化期、`excavation_pit` 祭祀坑、`material` 材质、`artifact` 文物、`artifact_image` 图片、`model_3d` 三维模型（3DGS / GLB 真实扫描，含来源与授权字段）、`restoration_record` 修复记录 |
 | 知识图谱与文献（4） | `kg_entity` 实体、`kg_relation` 关系（有向三元组）、`literature` 文献、`artifact_literature` 文物-文献关联 |
 | 智能问答（2） | `qa_session` 会话、`qa_message` 消息（检索上下文、引用实体、Token、耗时、兜底标记、反馈） |
 | 智能导览（2） | `guide_route` 路线、`guide_route_node` 路线节点（讲解词、3D 相机位） |
 | 观众服务（4） | `visitor` 游客档案、`reservation` 预约、`review` 评价、`favorite` 收藏 |
 | 运营内容（4） | `exhibition_event` 展览活动、`announcement` 公告、`system_config` 系统参数（含大模型配置）、`visit_statistics` 每日访问统计 |
 
-演示数据规模：文物 18 件、祭祀坑 8 个、知识图谱实体 66 个 / 关系 152 条、文献 8 篇、3DGS 模型 9 个、导览路线 5 条（25 个节点）、用户 5 个、近 30 天访问统计。
+演示数据规模：文物 21 件、祭祀坑 8 个、知识图谱实体 79 个 / 关系 201 条（含文物分类 CATEGORY 实体）、文献 8 篇、三维模型 14 个（其中**真实三维扫描 GLB 模型 5 个**、3DGS 占位模型 9 个）、导览路线 5 条（25 个节点）、用户 5 个、近 30 天访问统计。
 
-> **数据说明**：文物史实部分仅采用公开资料中较为确定的信息，尺寸、重量等均为约数，学术上有争议的观点以“有学者认为”表述；图片与 3DGS 模型 URL 为占位路径，模型训练指标、客流与问答等运营数据为模拟数据，需在后续阶段替换为真实数据。答辩前建议对照三星堆博物馆官方资料再核对一遍文物描述。
+> **数据说明**：文物史实部分仅采用公开资料中较为确定的信息，尺寸、重量等均为约数，学术上有争议的观点以“有学者认为”表述；3DGS 模型（splat/ply/ksplat/spz）URL 为占位路径、其训练指标为模拟数据（前端不会展示占位模型的指标，而是显示“模型采集中”）；`format='glb'` 的 5 个模型为真实三维扫描（见下文“三维模型来源与授权”），不含任何训练指标；客流与问答等运营数据为模拟数据，需在后续阶段替换为真实数据。答辩前建议对照三星堆博物馆官方资料再核对一遍文物描述。
 
 ## 六、本地运行
 
@@ -198,9 +197,28 @@ npm run build && npm run preview
 - 游客端：首页 / 文物展厅 / 文物详情 / 3D 数字展厅 / 知识图谱 / 智能导览问答 / 导览路线 / 参观预约 / 我的
 - 管理后台：用 `admin` 或 `curator` 登录后，右上角头像菜单进入（数据大屏 + 23 个管理模块 + 系统配置）
 
-**3DGS 模型说明**：数据库中的模型地址目前是占位地址，查看器加载失败时会自动切换为公开示例模型，并显示“示例模型”角标。示例地址在 `frontend/src/config.ts` 的 `APP_CONFIG.sampleSplatUrl` 中配置，也可在 `frontend/.env.local` 里设置 `VITE_SAMPLE_SPLAT_URL` 覆盖。以后训练出自己的 `.ply/.splat/.ksplat` 文件，放到 `frontend/public/models/` 并在后台“3D 模型管理”里改 `model_url` 即可。
+**三维模型说明**：
 
-**图片说明**：`frontend/public/static/images/` 中的文物图片为 AI 生成的示意图，并非博物馆实拍照片，正式答辩可替换为公开授权的实拍图（文件名保持不变即可）。
+- **真实三维扫描（GLB）**：`frontend/public/models/glb/` 下的 5 个 GLB 网格模型来自 Sketchfab 公开模型（CC BY 4.0，见下文“三维模型来源与授权”），由 three.js `GLTFLoader + OrbitControls` 渲染（博物馆式布光：暖色主光投影 + 逆光勾边 + 环境反射 + 柔和地面阴影，支持自动旋转、复位视角、全屏）。数据库中对应 `model_3d.format='glb'`、`model_type='OBJECT'`、`capture_device='第三方摄影测量扫描'`，`source_url / author / license` 三个字段记录来源与授权，高斯数 / PSNR 等 3DGS 指标一律为 NULL。
+- **3DGS 模型（splat/ply/ksplat/spz）**：仍由 `@mkkellogg/gaussian-splats-3d` 渲染。若 `model_url` 指向的文件不存在，查看器显示“**模型采集中**”，**不再用无关示例场景冒充文物**。以后训练出自己的 `.ply/.splat/.ksplat` 文件，放到 `frontend/public/models/` 并在后台“3D 模型管理”里改 `model_url` 即可自动上线。
+- **3DGS 渲染技术演示**：3D 数字展厅列表末尾单独保留一个“3DGS 渲染技术演示”条目，加载公开示例场景（Hugging Face `cakewalk/splat-data` 的 `train.splat`，Tanks and Temples 数据集场景），并明确标注“非三星堆文物”。示例地址在 `frontend/src/config.ts` 的 `APP_CONFIG.sampleSplatUrl` 中配置，也可在 `frontend/.env.local` 里设置 `VITE_SAMPLE_SPLAT_URL` 覆盖。
+- 3D 数字展厅中真实扫描模型排在最前并带“真实扫描”角标；查看器按 `format` 自动选择加载器（`frontend/src/components/ModelViewer.vue`）。
+
+**图片说明**：`frontend/public/static/images/` 中原有 18 件文物的图片为 AI 生成的示意图，并非博物馆实拍照片，正式答辩可替换为公开授权的实拍图（文件名保持不变即可）。新增的青铜人面具、青铜兽首冠人像、石跪坐人像 3 件文物的封面/细节图，以及 `static/images/models/glb/` 下的模型缩略图，均由对应的真实扫描 GLB 模型离线渲染生成（`artifact_image.image_type='RENDER'`），不是 AI 图片。
+
+### 7. 三维模型来源与授权
+
+以下真实三维扫描模型均来自 [Sketchfab](https://sketchfab.com) 平台的公开模型（经 Objaverse 数据集镜像获取），按 [知识共享 署名 4.0 国际许可协议（CC BY 4.0）](https://creativecommons.org/licenses/by/4.0/deed.zh-hans) 使用，未修改几何形状，仅调整了展示光照与取景。版权归原作者所有，特此署名致谢。前端 3D 数字展厅的“模型来源与授权”面板与每个查看器右下角也展示了同样的署名信息。
+
+| 本系统中的文物 / 模型 | 文件 | Sketchfab 原标题 | 作者 | 链接 | 授权 |
+| --- | --- | --- | --- | --- | --- |
+| 戴金面罩青铜人头像（平顶） | `models/glb/jinmianzhao_pingding.glb` | SANXINGDUI | ycq201 | https://sketchfab.com/3d-models/sanxingdui-5f208777bbe740729cfcba1d80c3df82 | CC BY 4.0 |
+| 戴金面罩青铜人头像（圆顶，备选扫描） | `models/glb/jinmianzhao_yuanding.glb` | sanxingdui-6 | f5b199（sketchfab.com/nxx20110718） | https://sketchfab.com/3d-models/sanxingdui-6-bbe0964618d54c8b9513fa89f6906b72 | CC BY 4.0 |
+| 青铜人面具 | `models/glb/renmianju.glb` | sanxingdui-3-mask | f5b199（sketchfab.com/nxx20110718） | https://sketchfab.com/3d-models/sanxingdui-3-mask-a899126df9f546528a09871305f5214e | CC BY 4.0 |
+| 青铜兽首冠人像 | `models/glb/shoushouguan_renxiang.glb` | sanxingdui-1 | f5b199（sketchfab.com/nxx20110718） | https://sketchfab.com/3d-models/sanxingdui-1-1df6c235aabd4977b8098e28ab27d8e6 | CC BY 4.0 |
+| 石跪坐人像 | `models/glb/shi_guizuo_renxiang.glb` | sanxingdui-2 | f5b199（sketchfab.com/nxx20110718） | https://sketchfab.com/3d-models/sanxingdui-2-07b0eb256f9d4c10a5a3bceb5a760b8c | CC BY 4.0 |
+
+> 模型与文物的对应关系由人工比对造型确定（渲染多角度视图核对）。其中“石跪坐人像”为石质、双手反缚的跪坐人像，此类造像在三星堆遗址、成都方池街遗址和金沙遗址均有出土，该扫描对应的具体馆藏尚未核实，其造型与金沙遗址出土者尤为接近，文物描述中已如实注明。
 
 ## 七、默认账号
 
@@ -284,9 +302,17 @@ es.addEventListener('done', () => es.close())
 
 ![文物详情](docs/screenshots/04-artifact-detail.png)
 
-**3D 数字展厅**
+**3D 数字展厅（真实扫描模型）**
 
 ![3D 数字展厅](docs/screenshots/07-hall3d.png)
+
+**文物详情 · 3D 模型（GLB 真实扫描）**
+
+![文物详情 3D 模型](docs/screenshots/06-artifact-3d.png)
+
+**模型来源与授权**
+
+![模型来源与授权](docs/screenshots/07d-hall3d-credits.png)
 
 **知识图谱**
 
@@ -324,5 +350,5 @@ es.addEventListener('done', () => es.close())
 
 ## 十、后续计划
 
-- 3DGS：用手机拍摄或公开数据，基于 COLMAP + gaussian-splatting / gsplat 训练真实文物模型，替换示例模型。
+- 3DGS：用手机拍摄或公开数据，基于 COLMAP + gaussian-splatting / gsplat 训练真实文物模型，替换目前“模型采集中”的占位条目。
 - GraphRAG 增强：文献分块 + 向量检索与图检索混合召回、社区摘要。

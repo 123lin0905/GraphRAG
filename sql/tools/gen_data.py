@@ -31,7 +31,8 @@ lines.append('''-- =============================================================
 -- 三星堆文物数字孪生与智能导览系统 —— 演示数据
 -- 说明：
 --   1. 文物史实部分仅采用公开报道中较为确定的信息，尺寸重量等均为约数；
---   2. 图片、3DGS 模型文件 URL 为占位路径，训练指标为演示用数值，需在模型训练后替换；
+--   2. 3DGS 模型（splat/ply/ksplat/spz）URL 为占位路径、训练指标为演示用数值，需在模型训练后替换；
+--      format='glb' 的模型为真实三维扫描（Sketchfab 公开模型，CC BY 4.0，见 source_url/author/license 字段），不含任何训练指标；
 --   3. 客流、问答等运营数据为模拟数据；日期相对当前日期生成，保证大屏趋势图始终有数据。
 -- 默认账号：admin/admin123（管理员）  curator/curator123（馆员）  visitor/visitor123（游客）
 -- =====================================================================
@@ -219,14 +220,32 @@ arts = [
      '三星堆遗址生活区出土的陶质酒器，带有袋状足与流口。',
      '陶盉是三星堆文化具有代表性的陶器之一，也反映了与中原二里头文化等的联系。',
      '这件陶盉是古蜀人的酒器，三条袋状足稳稳立着，让我们看到了古蜀人的日常生活。', '/static/images/artifacts/taohe.jpg', 210, 1),
+    # ---- 以下 3 件为配合真实三维扫描模型（第三方 CC BY 4.0 公开模型）新增，描述只采用公开资料中较确定的信息
+    (19, 'SXD-K2-010', '青铜人面具', '人面具,铜人面具,青铜人面像', 7, 3, 2, 1, 3, 4, '大小不一（各件尺寸不同）', None, None, None, 1986, None, 0,
+     '出土于二号祭祀坑。二号坑出土青铜人面具二十件左右（较完整者十余件），一号坑另出土小型人面具一件。面具均呈半圆形，大小不一，方面宽颐，眉眼粗犷，鼻梁高直，阔口紧闭，双耳向两侧展开，额部及两侧多有方孔。本系统的三维模型为其中一件的第三方扫描。',
+     '面具体量较大且多有穿孔，一般认为并非供人佩戴，而可能固定在其他像体或器物上用于祭祀，是三星堆青铜面具体系的重要组成部分。',
+     '这件青铜人面具方脸大耳、眉眼上挑，表情威严。它额头和两侧的方孔，可能是用来把面具固定在别的物体上的。', '/static/images/artifacts/renmianju.jpg', 260, 1),
+    (20, 'SXD-K2-011', '青铜兽首冠人像', '兽首冠人像,铜兽首冠人像,兽冠人像', 6, 3, 2, 1, 3, 5, '残高约40厘米（仅存上半身）', 40.2, None, None, 1986, None, 0,
+     '出土于二号祭祀坑。人像仅存上半身，两臂呈环抱状构势于胸前，双手作执握中空状；身着对襟衣，腰间系带。头戴兽首冠，冠顶中部有高耸的兽鼻，两侧向后展开兽耳。',
+     '人像的造型与手势与青铜大立人像相类，有学者推测其表现的是某种祭仪主持者的形象；兽首冠的鼻与耳被认为可能仿拟大象，与祭祀坑中大量出土的象牙相呼应，但具体含义学界仍有不同看法。',
+     '这位头戴奇特兽首冠的人物，双手环抱在胸前，好像握着什么东西。他的冠上竖起长长的“鼻子”和一对大耳朵，有人认为那是大象的形象。', '/static/images/artifacts/shoushouguan.jpg', 240, 1),
+    (21, 'SXD-ST-001', '石跪坐人像', '石跪人像,反缚石人像', 3, 4, None, 6, 5, None, None, None, None, None, None, None, 0,
+     '石质圆雕人像，裸身赤足，双膝跪地、臀部坐于脚跟，双手反缚于背后，头顶发式中分、两侧上翘，脑后垂辫。此类石跪坐人像在三星堆遗址、成都方池街遗址和金沙遗址均有发现，年代约在商代晚期至西周（约数）。本系统所用三维模型来自第三方公开扫描，对应的具体馆藏与出土地点尚未核实，其造型与金沙遗址出土者尤为接近。',
+     '此类造像不见于中国其他地区，被认为是古蜀特有的艺术题材。其身份学界看法不一：有学者认为表现的是奴隶或战俘等下层人物，也有学者认为可能是巫师形象。',
+     '这尊石头雕成的小人跪坐着，双手被反绑在身后，头发从中间分开向两边翘起。他到底是战俘还是巫师？学者们至今还在讨论。', '/static/images/artifacts/shiguizuo.jpg', 180, 1),
 ]
 insert('artifact', A, arts)
 art_name = {a[0]: a[2] for a in arts}
 
 # 图片（占位路径）
 imgs = []
+RENDERED = {19, 20, 21}   # 这 3 件的图片由真实扫描 GLB 模型离线渲染生成（非照片、非 AI 生成）
 for a in arts:
     base = a[20].rsplit('.', 1)[0]
+    if a[0] in RENDERED:
+        imgs.append((a[0], a[20], 'RENDER', a[2] + ' 三维扫描渲染图（正面）', 1200, 896, 1, 1))
+        imgs.append((a[0], base + '_detail.jpg', 'RENDER', a[2] + ' 三维扫描渲染图（侧面/背面）', 1200, 896, 0, 2))
+        continue
     imgs.append((a[0], a[20], 'PHOTO', a[2] + ' 正面', 1920, 1280, 1, 1))
     imgs.append((a[0], base + '_detail.jpg', 'DETAIL', a[2] + ' 细节', 1920, 1280, 0, 2))
     if a[16] == 1:
@@ -236,18 +255,40 @@ insert('artifact_image', ['artifact_id', 'image_url', 'image_type', 'title', 'wi
 # 3DGS 模型（演示指标）
 M = ['artifact_id', 'hall_id', 'name', 'model_type', 'model_url', 'format', 'file_size', 'gaussian_count', 'sh_degree', 'image_count',
      'capture_device', 'sfm_tool', 'trained_by', 'train_iterations', 'train_minutes', 'psnr', 'ssim', 'lpips', 'camera_position',
-     'camera_target', 'thumbnail_url', 'is_default', 'status', 'remark']
+     'camera_target', 'thumbnail_url', 'is_default', 'status', 'remark', 'source_url', 'author', 'license']
 models = [
     (1, None, '青铜神树 3DGS 模型', 'OBJECT', '/models/splat/shenshu.splat', 'splat', 52428800, 1638400, 3, 220, '单反相机 + 环形轨道', 'COLMAP', 'gaussian-splatting 官方实现', 30000, 42.5, 31.82, 0.9420, 0.0810, '[0,1.6,4.5]', '[0,1.5,0]', '/static/images/models/shenshu.jpg', 1, 1, '演示数据，模型文件待替换'),
     (1, None, '青铜神树 3DGS 模型（压缩版）', 'OBJECT', '/models/ksplat/shenshu.ksplat', 'ksplat', 18874368, 1638400, 1, 220, '单反相机 + 环形轨道', 'COLMAP', 'gaussian-splatting 官方实现', 30000, 42.5, 31.20, 0.9350, 0.0890, '[0,1.6,4.5]', '[0,1.5,0]', '/static/images/models/shenshu.jpg', 0, 1, 'Web端流式加载用'),
     (2, None, '青铜纵目面具 3DGS 模型', 'OBJECT', '/models/splat/zongmu.splat', 'splat', 31457280, 982000, 3, 160, '手机多视角拍摄', 'COLMAP', 'gsplat', 30000, 25.0, 33.06, 0.9610, 0.0620, '[0,0,2.2]', '[0,0,0]', '/static/images/models/zongmu.jpg', 1, 1, '演示数据，模型文件待替换'),
     (3, None, '青铜大立人像 3DGS 模型', 'OBJECT', '/models/ply/dalirenxiang.ply', 'ply', 241172480, 1050000, 3, 240, '单反相机 + 环形轨道', 'COLMAP', 'gaussian-splatting 官方实现', 30000, 48.3, 30.95, 0.9380, 0.0920, '[0,1.3,4.0]', '[0,1.2,0]', '/static/images/models/dalirenxiang.jpg', 1, 1, '原始ply，体积较大'),
-    (4, None, '戴金面罩青铜人头像 3DGS 模型', 'OBJECT', '/models/splat/jinmianzhao.splat', 'splat', 20971520, 655000, 3, 140, '手机多视角拍摄', 'COLMAP', 'gsplat', 30000, 19.6, 32.41, 0.9550, 0.0710, '[0,0,1.6]', '[0,0,0]', '/static/images/models/jinmianzhao.jpg', 1, 1, '演示数据，模型文件待替换'),
+    (4, None, '戴金面罩青铜人头像 3DGS 模型', 'OBJECT', '/models/splat/jinmianzhao.splat', 'splat', 20971520, 655000, 3, 140, '手机多视角拍摄', 'COLMAP', 'gsplat', 30000, 19.6, 32.41, 0.9550, 0.0710, '[0,0,1.6]', '[0,0,0]', '/static/images/models/jinmianzhao.jpg', 0, 1, '演示数据，模型文件待替换（已由真实扫描 GLB 模型替代为默认展示）'),
     (5, None, '金杖 3DGS 模型', 'OBJECT', '/models/splat/jinzhang.splat', 'splat', 12582912, 393000, 3, 120, '微距镜头', 'COLMAP', 'gsplat', 20000, 12.4, 34.10, 0.9680, 0.0550, '[0,0,1.8]', '[0,0,0]', '/static/images/models/jinzhang.jpg', 1, 1, '演示数据，模型文件待替换'),
     (6, None, '黄金面具（五号坑）3DGS 模型', 'OBJECT', '/models/splat/jinmianju.splat', 'splat', 14680064, 458000, 3, 130, '微距镜头', 'COLMAP', 'gsplat', 30000, 15.2, 33.75, 0.9640, 0.0580, '[0,0,1.2]', '[0,0,0]', '/static/images/models/jinmianju.jpg', 1, 1, '演示数据，模型文件待替换'),
     (11, None, '青铜太阳形器 3DGS 模型', 'OBJECT', '/models/spz/taiyang.spz', 'spz', 8388608, 520000, 3, 110, '手机多视角拍摄', 'COLMAP', 'gsplat', 30000, 16.8, 32.90, 0.9570, 0.0660, '[0,0,2.0]', '[0,0,0]', '/static/images/models/taiyang.jpg', 1, 0, '训练中'),
     (None, 3, '天地人神展厅 场景模型', 'SCENE', '/models/scene/hall_h03.ksplat', 'ksplat', 157286400, 3200000, 3, 680, '全景相机 + 单反', 'COLMAP', 'gaussian-splatting 官方实现', 30000, 96.0, 27.64, 0.8820, 0.1730, '[0,1.7,12]', '[0,1.5,0]', '/static/images/models/hall_h03.jpg', 1, 1, '展厅级数字孪生场景（演示）'),
 ]
+models = [m + (None, None, None) for m in models]
+# 真实三维扫描模型（GLB 网格）：来自 Sketchfab 公开模型（经 Objaverse 镜像获取），均为 CC BY 4.0 授权，未作几何修改。
+# 非 3DGS 模型，高斯数 / PSNR / SSIM / LPIPS / 训练参数一律留空（NULL），不编造指标。
+SKETCHFAB_GLB = [
+    # (文物ID, 模型名称, 文件名, 文件大小, Sketchfab 原标题, 作者, Sketchfab 链接, 是否默认)
+    (4, '戴金面罩青铜人头像（平顶）真实扫描模型', 'jinmianzhao_pingding', 2560840, 'SANXINGDUI', 'ycq201',
+     'https://sketchfab.com/3d-models/sanxingdui-5f208777bbe740729cfcba1d80c3df82', 1),
+    (4, '戴金面罩青铜人头像（圆顶）真实扫描模型', 'jinmianzhao_yuanding', 3105044, 'sanxingdui-6', 'f5b199（sketchfab.com/nxx20110718）',
+     'https://sketchfab.com/3d-models/sanxingdui-6-bbe0964618d54c8b9513fa89f6906b72', 0),
+    (19, '青铜人面具 真实扫描模型', 'renmianju', 760160, 'sanxingdui-3-mask', 'f5b199（sketchfab.com/nxx20110718）',
+     'https://sketchfab.com/3d-models/sanxingdui-3-mask-a899126df9f546528a09871305f5214e', 1),
+    (20, '青铜兽首冠人像 真实扫描模型', 'shoushouguan_renxiang', 1570084, 'sanxingdui-1', 'f5b199（sketchfab.com/nxx20110718）',
+     'https://sketchfab.com/3d-models/sanxingdui-1-1df6c235aabd4977b8098e28ab27d8e6', 1),
+    (21, '石跪坐人像 真实扫描模型', 'shi_guizuo_renxiang', 788148, 'sanxingdui-2', 'f5b199（sketchfab.com/nxx20110718）',
+     'https://sketchfab.com/3d-models/sanxingdui-2-07b0eb256f9d4c10a5a3bceb5a760b8c', 1),
+]
+for aid, name, fn, size, title, author, url, dflt in SKETCHFAB_GLB:
+    models.append((aid, None, name, 'OBJECT', f'/models/glb/{fn}.glb', 'glb', size, None, None, None,
+                   '第三方摄影测量扫描', None, None, None, None, None, None, None, None, None,
+                   f'/static/images/models/glb/{fn}.jpg', dflt, 1,
+                   f'来源：Sketchfab「{title}」，作者 {author}，CC BY 4.0 授权（经 Objaverse 镜像获取，未作几何修改）',
+                   url, author, 'CC BY 4.0'))
 insert('model_3d', M, models)
 
 insert('restoration_record', ['artifact_id', 'restorer', 'start_date', 'end_date', 'condition_before', 'method', 'condition_after', 'status', 'remark'], [
@@ -293,6 +334,7 @@ insert('artifact_literature', ['artifact_id', 'literature_id', 'note'], [
     (1, 3, '扶桑神话与神树'), (1, 4, '考古报告著录'), (2, 1, '蚕丛纵目记载'), (2, 4, '考古报告著录'),
     (3, 4, '考古报告著录'), (5, 4, '考古报告著录'), (5, 2, '鱼凫传说'), (11, 3, '太阳崇拜'),
     (6, 5, '新发现'), (7, 5, '新发现'), (8, 5, '新发现'), (14, 5, '新发现'), (5, 6, '金器工艺'), (4, 6, '金面罩工艺'), (7, 6, '分铸工艺'),
+    (19, 4, '考古报告著录'), (20, 4, '考古报告著录'),
 ])
 
 # ---------------------------------------------------------------- 知识图谱
@@ -311,8 +353,8 @@ for a in arts:
     ent(('A', a[0]), a[2], 'ARTIFACT', a[3], a[17], 'artifact', a[0], 3.0 if a[16] else 2.0)
 for p in pits:
     ent(('P', p[0]), p[2], 'PIT', p[1] + ',' + p[1].replace('K', '') + '号坑,' + p[2].replace('祭祀坑', '坑'), p[7], 'excavation_pit', p[0], 2.5)
-mats = {1: '青铜', 2: '黄金', 3: '玉', 4: '象牙', 5: '陶'}
-mat_alias = {1: '青铜器,铜', 2: '金,金器', 3: '玉器,玉石', 4: '象牙制品', 5: '陶器'}
+mats = {1: '青铜', 2: '黄金', 3: '玉', 4: '象牙', 5: '陶', 6: '石'}
+mat_alias = {1: '青铜器,铜', 2: '金,金器', 3: '玉器,玉石', 4: '象牙制品', 5: '陶器', 6: '石质,石器'}
 for k, v in mats.items():
     ent(('M', k), v, 'MATERIAL', mat_alias[k], None, 'material', k, 1.5)
 per = {1: ('三星堆遗址第一期', '宝墩期'), 2: ('三星堆遗址第二、三期', '夏商时期'), 3: ('商代晚期', '商晚期,殷商晚期'), 4: ('三星堆遗址第四期', '商末周初')}
@@ -412,6 +454,33 @@ rel(('L', 3), '神树信仰', 'MENTIONS', '记载')
 rel(('L', 4), ('P', 1), 'MENTIONS', '著录')
 rel(('L', 4), ('P', 2), 'MENTIONS', '著录')
 rel(('L', 5), '三星堆遗址', 'MENTIONS', '介绍')
+
+# 文物分类实体（CATEGORY）：所有文物与其分类相连，子类再连到一级分类
+cats = {1: ('青铜器', None), 2: ('金器', None), 3: ('玉石器', None), 4: ('象牙与骨器', None), 5: ('陶器类', None),
+        6: ('青铜人像', 1), 7: ('青铜面具', 1), 8: ('青铜神器', 1), 9: ('青铜礼器', 1)}
+cat_alias = {1: '青铜器类', 2: '金器类', 3: '玉石器类', 4: '象牙器', 5: '陶器类', 6: '人像,铜人像', 7: '面具,铜面具', 8: '神器', 9: '礼器,铜容器'}
+for k, (n, parent) in cats.items():
+    ent(('C', k), n, 'CATEGORY', cat_alias[k], None, 'artifact_category', k, 1.3)
+for k, (n, parent) in cats.items():
+    if parent:
+        rel(('C', k), ('C', parent), 'SUBCLASS_OF', '属于大类')
+for a in arts:
+    rel(('A', a[0]), ('C', a[4]), 'BELONGS_TO_CATEGORY', '分类为')
+# 新增 3 件文物的补充关联（文化、主题、同类器物）
+rel(('A', 19), '三星堆文化', 'BELONGS_TO_CULTURE', '属于文化')
+rel(('A', 20), '三星堆文化', 'BELONGS_TO_CULTURE', '属于文化')
+rel(('A', 21), '古蜀文明', 'BELONGS_TO_CULTURE', '属于文化', '此类石跪坐人像仅见于成都平原古蜀文化遗址')
+rel(('A', 19), ('A', 2), 'SIMILAR_TYPE', '同类器物', '同属二号坑青铜面具')
+rel(('A', 19), ('A', 16), 'SIMILAR_TYPE', '同类器物', '同属二号坑青铜面具')
+rel(('A', 20), ('A', 3), 'SIMILAR_TYPE', '造型相类', '两臂环抱、双手执握中空的造型相类')
+rel(('A', 19), '祭祀礼仪', 'REFLECTS', '体现')
+rel(('A', 20), '祭祀礼仪', 'REFLECTS', '体现')
+rel(('A', 20), '王权与神权', 'REFLECTS', '体现', '有学者推测其为祭仪主持者形象', 0.7)
+rel(('A', 21), '三星堆遗址', 'RELATED_TO', '同类器物见于', '三星堆遗址曾出土双手反缚的石跪坐人像', 0.8)
+rel(('A', 21), '金沙遗址', 'RELATED_TO', '同类器物见于', '金沙遗址出土十余件同类石跪坐人像', 0.8)
+rel(('A', 21), '祭祀礼仪', 'REFLECTS', '体现', '有学者认为与祭祀献祭有关', 0.6)
+for a in [19, 20]:
+    rel(('A', a), '青铜铸造', 'MADE_BY', '制作工艺')
 
 insert('kg_entity', ['id', 'name', 'entity_type', 'aliases', 'description', 'ref_table', 'ref_id', 'weight'], ents)
 insert('kg_relation', ['source_id', 'target_id', 'relation_type', 'relation_name', 'weight', 'description'], rels)

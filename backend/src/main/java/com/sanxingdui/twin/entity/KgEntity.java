@@ -24,8 +24,8 @@ public class KgEntity extends BaseEntity {
     @Schema(description = "实体名称")
     private String name;
 
-    /** 实体类型：ARTIFACT-文物 PIT-祭祀坑 MATERIAL-材质 PERIOD-年代 CULTURE-文化 THEME-主题 SITE-遗址 MUSEUM-博物馆 PERSON-人物 HALL-展厅 LITERATURE-文献 TECH-工艺 */
-    @Schema(description = "实体类型：ARTIFACT-文物 PIT-祭祀坑 MATERIAL-材质 PERIOD-年代 CULTURE-文化 THEME-主题 SITE-遗址 MUSEUM-博物馆 PERSON-人物 HALL-展厅 LITERATURE-文献 TECH-工艺")
+    /** 实体类型：ARTIFACT-文物 PIT-祭祀坑 MATERIAL-材质 PERIOD-年代 CULTURE-文化 THEME-主题 SITE-遗址 MUSEUM-博物馆 PERSON-人物 HALL-展厅 LITERATURE-文献 TECH-工艺 CATEGORY-文物分类 */
+    @Schema(description = "实体类型：ARTIFACT-文物 PIT-祭祀坑 MATERIAL-材质 PERIOD-年代 CULTURE-文化 THEME-主题 SITE-遗址 MUSEUM-博物馆 PERSON-人物 HALL-展厅 LITERATURE-文献 TECH-工艺 CATEGORY-文物分类")
     private String entityType;
 
     /** 别名（逗号分隔，用于问句实体链接） */

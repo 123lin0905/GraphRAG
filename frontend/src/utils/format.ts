@@ -45,11 +45,21 @@ export const RESERVATION_STATUS: Record<string, { label: string; type: 'success'
 export const ROUTE_TYPE: Record<string, string> = { CLASSIC: '经典路线', THEME: '主题路线', QUICK: '快速路线', FAMILY: '亲子路线' }
 export const ENTITY_TYPE: Record<string, string> = {
   ARTIFACT: '文物', PIT: '祭祀坑', MATERIAL: '材质', PERIOD: '年代', CULTURE: '文化', THEME: '主题', SITE: '遗址',
-  MUSEUM: '博物馆', PERSON: '人物', HALL: '展厅', LITERATURE: '文献', TECH: '工艺'
+  MUSEUM: '博物馆', PERSON: '人物', HALL: '展厅', LITERATURE: '文献', TECH: '工艺', CATEGORY: '分类'
 }
 /** 知识图谱实体类型配色（与青铜主题协调的低饱和色） */
 export const ENTITY_COLORS: Record<string, string> = {
   ARTIFACT: '#E0B866', PIT: '#C9694F', MATERIAL: '#7FB8A1', PERIOD: '#A48FD0', CULTURE: '#D79A5B', THEME: '#E58FA0',
-  SITE: '#8DA4D8', MUSEUM: '#F0D9A0', PERSON: '#79C3D6', HALL: '#9BBF6A', LITERATURE: '#C7B48D', TECH: '#B7A6E0'
+  SITE: '#8DA4D8', MUSEUM: '#F0D9A0', PERSON: '#79C3D6', HALL: '#9BBF6A', LITERATURE: '#C7B48D', TECH: '#B7A6E0', CATEGORY: '#9FB3A8'
 }
 export const ARTIFACT_STATUS: Record<number, string> = { 0: '库房', 1: '在展', 2: '修复中' }
+
+/** 三维网格格式（真实扫描模型），区别于 3DGS 高斯泼溅格式 */
+export const MESH_FORMATS = ['glb', 'gltf']
+export function isMeshModel(m?: { format?: string | null } | null): boolean {
+  return !!m && MESH_FORMATS.includes(String(m.format || '').toLowerCase())
+}
+/** 同一文物的模型排序：默认模型优先，其次真实扫描，再按 ID */
+export function sortModels<T extends { id: number; isDefault?: number; format?: string }>(list: T[]): T[] {
+  return [...list].sort((a, b) => (b.isDefault || 0) - (a.isDefault || 0) || Number(isMeshModel(b)) - Number(isMeshModel(a)) || a.id - b.id)
+}

@@ -7,7 +7,7 @@ import type { Option } from '@/utils/dicts'
 const o = (pairs: [any, string][]): Option[] => pairs.map(([value, label]) => ({ value, label }))
 const YES_NO = o([[1, '是'], [0, '否']])
 const ENABLE = o([[1, '启用'], [0, '停用']])
-const ENTITY_TYPES = o([['ARTIFACT', '文物'], ['PIT', '祭祀坑'], ['MATERIAL', '材质'], ['PERIOD', '年代'], ['CULTURE', '文化'], ['THEME', '主题'], ['SITE', '遗址'], ['MUSEUM', '博物馆'], ['PERSON', '人物'], ['HALL', '展厅'], ['LITERATURE', '文献'], ['TECH', '工艺']])
+const ENTITY_TYPES = o([['ARTIFACT', '文物'], ['PIT', '祭祀坑'], ['MATERIAL', '材质'], ['PERIOD', '年代'], ['CULTURE', '文化'], ['THEME', '主题'], ['SITE', '遗址'], ['MUSEUM', '博物馆'], ['PERSON', '人物'], ['HALL', '展厅'], ['LITERATURE', '文献'], ['TECH', '工艺'], ['CATEGORY', '分类']])
 
 export const CRUD_CONFIGS: CrudConfig[] = [
   // ======================= 文物管理 =======================
@@ -89,7 +89,7 @@ export const CRUD_CONFIGS: CrudConfig[] = [
       { prop: 'imageUrl', label: '图片', type: 'image', width: 90, required: true, span: 2 },
       { prop: 'artifactId', label: '所属文物', type: 'select', dict: 'artifacts', filter: true, required: true },
       { prop: 'title', label: '标题' },
-      { prop: 'imageType', label: '类型', type: 'select', filter: true, options: o([['PHOTO', '实拍'], ['DETAIL', '细节'], ['LINE', '线图'], ['TRAIN', '3DGS训练视图']]), tags: { PHOTO: 'primary', DETAIL: 'success', LINE: 'info', TRAIN: 'warning' } },
+      { prop: 'imageType', label: '类型', type: 'select', filter: true, options: o([['PHOTO', '实拍'], ['DETAIL', '细节'], ['LINE', '线图'], ['TRAIN', '3DGS训练视图'], ['RENDER', '三维扫描渲染图']]), tags: { PHOTO: 'primary', DETAIL: 'success', LINE: 'info', TRAIN: 'warning', RENDER: 'danger' } },
       { prop: 'isCover', label: '封面', type: 'switch', options: YES_NO, tags: { 1: 'warning', 0: 'info' }, width: 80 },
       { prop: 'widthPx', label: '宽(px)', type: 'number', table: false },
       { prop: 'heightPx', label: '高(px)', type: 'number', table: false },
@@ -97,14 +97,14 @@ export const CRUD_CONFIGS: CrudConfig[] = [
     ]
   },
   {
-    key: 'models', title: '3DGS 模型', group: '文物管理', icon: 'Box', api: '/models', dialogWidth: '880px',
-    desc: '3D 高斯泼溅模型文件与训练指标（高斯数、PSNR/SSIM/LPIPS）',
+    key: 'models', title: '3D 模型', group: '文物管理', icon: 'Box', api: '/models', dialogWidth: '880px',
+    desc: '真实三维扫描模型（GLB，第三方 CC BY 4.0）与 3D 高斯泼溅模型（训练指标：高斯数、PSNR/SSIM/LPIPS）',
     fields: [
       { prop: 'name', label: '模型名称', required: true, minWidth: 180 },
       { prop: 'artifactId', label: '关联文物', type: 'select', dict: 'artifacts', filter: true },
       { prop: 'hallId', label: '关联展厅', type: 'select', dict: 'halls', table: false },
       { prop: 'modelType', label: '类型', type: 'select', options: o([['OBJECT', '单体文物'], ['SCENE', '展厅场景']]), filter: true, width: 96, default: 'OBJECT' },
-      { prop: 'format', label: '格式', type: 'select', options: o([['splat', 'splat'], ['ksplat', 'ksplat'], ['ply', 'ply'], ['spz', 'spz']]), filter: true, width: 80, tags: { splat: 'primary', ksplat: 'success', ply: 'warning', spz: 'info' } },
+      { prop: 'format', label: '格式', type: 'select', options: o([['glb', 'glb'], ['gltf', 'gltf'], ['splat', 'splat'], ['ksplat', 'ksplat'], ['ply', 'ply'], ['spz', 'spz']]), filter: true, width: 80, tags: { glb: 'danger', gltf: 'danger', splat: 'primary', ksplat: 'success', ply: 'warning', spz: 'info' } },
       { prop: 'modelUrl', label: '模型URL', required: true, span: 2, minWidth: 200, ellipsis: true },
       { prop: 'gaussianCount', label: '高斯数', type: 'number', width: 100 },
       { prop: 'psnr', label: 'PSNR', type: 'number', width: 80, precision: 3 },
@@ -120,6 +120,10 @@ export const CRUD_CONFIGS: CrudConfig[] = [
       { prop: 'trainedBy', label: '训练框架', table: false },
       { prop: 'cameraPosition', label: '相机位置[x,y,z]', table: false },
       { prop: 'cameraTarget', label: '相机观察点[x,y,z]', table: false },
+      { prop: 'author', label: '模型作者', table: false },
+      { prop: 'license', label: '授权协议', width: 96 },
+      { prop: 'sourceUrl', label: '来源链接', span: 2, table: false },
+      { prop: 'remark', label: '备注', span: 2, table: false },
       { prop: 'isDefault', label: '默认', type: 'switch', options: YES_NO, width: 70, tags: { 1: 'success', 0: 'info' } },
       { prop: 'status', label: '状态', type: 'select', options: o([[1, '可用'], [0, '训练中'], [2, '已下线']]), tags: { 1: 'success', 0: 'warning', 2: 'info' }, width: 86, filter: true, default: 1 }
     ]

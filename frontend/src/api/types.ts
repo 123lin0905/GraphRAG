@@ -84,6 +84,10 @@ export interface Model3d {
   thumbnailUrl?: string
   isDefault?: number
   status?: number
+  remark?: string
+  sourceUrl?: string
+  author?: string
+  license?: string
 }
 export interface GraphNode {
   id: string

@@ -74,32 +74,57 @@
           <el-tab-pane label="3D 模型" name="model">
             <div class="model-pane" v-if="tab === 'model'">
               <div class="viewer-box">
-                <SplatViewer :url="curModel?.modelUrl" :camera-position="parseVec(curModel?.cameraPosition)" :camera-target="parseVec(curModel?.cameraTarget)" :format="curModel?.format" />
+                <ModelViewer :model="curModel" @status="(s: string) => (viewerState = s)" />
               </div>
               <aside class="model-meta">
-                <template v-if="d.models.length">
-                  <el-select v-if="d.models.length > 1" v-model="modelIdx" style="width: 100%; margin-bottom: 14px">
-                    <el-option v-for="(m, i) in d.models" :key="m.id" :label="`${m.name}（${m.format}）`" :value="i" />
+                <template v-if="models.length">
+                  <el-select v-if="models.length > 1" v-model="modelIdx" style="width: 100%; margin-bottom: 14px">
+                    <el-option v-for="(m, i) in models" :key="m.id" :label="`${m.name}（${m.format}）`" :value="i" />
                   </el-select>
                   <h4>{{ curModel?.name }}</h4>
-                  <div class="metric-grid">
-                    <div><label>高斯基元</label><b>{{ fmtNum(curModel?.gaussianCount) }}</b></div>
-                    <div><label>PSNR</label><b>{{ curModel?.psnr ?? '—' }}<small> dB</small></b></div>
-                    <div><label>SSIM</label><b>{{ curModel?.ssim ?? '—' }}</b></div>
-                    <div><label>LPIPS</label><b>{{ curModel?.lpips ?? '—' }}</b></div>
-                    <div><label>训练迭代</label><b>{{ fmtNum(curModel?.trainIterations) }}</b></div>
-                    <div><label>文件大小</label><b>{{ fmtBytes(curModel?.fileSize) }}</b></div>
-                  </div>
-                  <dl>
-                    <dt>采集设备</dt><dd>{{ curModel?.captureDevice || '—' }}</dd>
-                    <dt>训练视图</dt><dd>{{ curModel?.imageCount ?? '—' }} 张</dd>
-                    <dt>位姿估计</dt><dd>{{ curModel?.sfmTool || '—' }}</dd>
-                    <dt>训练框架</dt><dd>{{ curModel?.trainedBy || '—' }}</dd>
-                    <dt>球谐阶数</dt><dd>SH {{ curModel?.shDegree ?? '—' }}</dd>
-                    <dt>模型地址</dt><dd class="mono">{{ curModel?.modelUrl }}</dd>
-                  </dl>
+
+                  <!-- 真实三维扫描（GLB/GLTF）：只展示真实信息，不展示 3DGS 训练指标 -->
+                  <template v-if="isMeshModel(curModel)">
+                    <div class="real-badge"><el-icon><CircleCheck /></el-icon>真实三维扫描模型</div>
+                    <div class="metric-grid">
+                      <div><label>格式</label><b>{{ (curModel?.format || '').toUpperCase() }}</b></div>
+                      <div><label>文件大小</label><b>{{ fmtBytes(curModel?.fileSize) }}</b></div>
+                    </div>
+                    <dl>
+                      <dt>采集方式</dt><dd>{{ curModel?.captureDevice || '—' }}</dd>
+                      <dt>模型作者</dt><dd>{{ curModel?.author || '—' }}</dd>
+                      <dt>授权协议</dt><dd><a href="https://creativecommons.org/licenses/by/4.0/deed.zh-hans" target="_blank" rel="noopener">{{ curModel?.license || '—' }}</a></dd>
+                      <dt>来源</dt><dd><a v-if="curModel?.sourceUrl" :href="curModel.sourceUrl" target="_blank" rel="noopener">Sketchfab 原页面 ↗</a><span v-else>—</span></dd>
+                      <dt>模型地址</dt><dd class="mono">{{ curModel?.modelUrl }}</dd>
+                    </dl>
+                    <p class="model-note">{{ curModel?.remark }}</p>
+                  </template>
+
+                  <!-- 3DGS：文件未上线时显示“采集中”，不展示演示指标 -->
+                  <template v-else-if="viewerState === 'pending'">
+                    <div class="pending-badge"><el-icon><Camera /></el-icon>3DGS 模型采集中</div>
+                    <p class="model-note">该文物的 3D 高斯泼溅模型尚在采集与训练，模型文件上线后将在此展示真实的训练指标（高斯数量、PSNR、SSIM、LPIPS 等）。</p>
+                  </template>
+                  <template v-else>
+                    <div class="metric-grid">
+                      <div><label>高斯基元</label><b>{{ fmtNum(curModel?.gaussianCount) }}</b></div>
+                      <div><label>PSNR</label><b>{{ curModel?.psnr ?? '—' }}<small> dB</small></b></div>
+                      <div><label>SSIM</label><b>{{ curModel?.ssim ?? '—' }}</b></div>
+                      <div><label>LPIPS</label><b>{{ curModel?.lpips ?? '—' }}</b></div>
+                      <div><label>训练迭代</label><b>{{ fmtNum(curModel?.trainIterations) }}</b></div>
+                      <div><label>文件大小</label><b>{{ fmtBytes(curModel?.fileSize) }}</b></div>
+                    </div>
+                    <dl>
+                      <dt>采集设备</dt><dd>{{ curModel?.captureDevice || '—' }}</dd>
+                      <dt>训练视图</dt><dd>{{ curModel?.imageCount ?? '—' }} 张</dd>
+                      <dt>位姿估计</dt><dd>{{ curModel?.sfmTool || '—' }}</dd>
+                      <dt>训练框架</dt><dd>{{ curModel?.trainedBy || '—' }}</dd>
+                      <dt>球谐阶数</dt><dd>SH {{ curModel?.shDegree ?? '—' }}</dd>
+                      <dt>模型地址</dt><dd class="mono">{{ curModel?.modelUrl }}</dd>
+                    </dl>
+                  </template>
                 </template>
-                <el-empty v-else description="该文物暂无 3DGS 模型，展示示例场景" :image-size="70" />
+                <el-empty v-else description="该文物暂无三维模型，模型采集中" :image-size="70" />
               </aside>
             </div>
           </el-tab-pane>
@@ -163,17 +188,17 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import BronzeImage from '@/components/BronzeImage.vue'
-import SplatViewer from '@/components/SplatViewer.vue'
+import ModelViewer from '@/components/ModelViewer.vue'
 import KgGraph from '@/components/KgGraph.vue'
 import ArtifactCard from '@/components/ArtifactCard.vue'
 import SectionHeading from '@/components/SectionHeading.vue'
 import ReviewPanel from '@/components/ReviewPanel.vue'
 import { artifactApi, favoriteApi } from '@/api'
 import type { ArtifactDetail, GraphNode } from '@/api/types'
-import { ARTIFACT_STATUS, fmtBytes, fmtNum, parseVec } from '@/utils/format'
+import { ARTIFACT_STATUS, fmtBytes, fmtNum, isMeshModel, sortModels } from '@/utils/format'
 import { useAuthStore } from '@/stores/auth'
 
-const IMG_TYPE: Record<string, string> = { PHOTO: '实拍', DETAIL: '细节', LINE: '线图', TRAIN: '3DGS 训练视图' }
+const IMG_TYPE: Record<string, string> = { PHOTO: '实拍', DETAIL: '细节', LINE: '线图', TRAIN: '3DGS 训练视图', RENDER: '三维扫描渲染' }
 const LIT_TYPE: Record<string, string> = { BOOK: '专著', PAPER: '论文', ANCIENT: '古籍', REPORT: '考古报告', GUIDE: '导览文稿' }
 const RESTORE_STATUS: Record<string, string> = { PLANNED: '计划', ONGOING: '进行中', DONE: '已完成' }
 
@@ -192,7 +217,9 @@ const a = computed(() => d.value!.artifact)
 const images = computed(() => (d.value?.images?.length ? d.value.images : d.value ? [{ id: 0, artifactId: a.value.id, imageUrl: a.value.coverUrl || '', imageType: 'PHOTO' }] : []))
 const curImg = computed(() => images.value[curIdx.value]?.imageUrl)
 const curType = computed(() => images.value[curIdx.value]?.imageType || 'PHOTO')
-const curModel = computed(() => d.value?.models?.[modelIdx.value])
+const models = computed(() => sortModels(d.value?.models || []))
+const curModel = computed(() => models.value[modelIdx.value])
+const viewerState = ref('')
 const centerId = computed(() => d.value?.graph?.nodes.find((n) => n.refTable === 'artifact' && n.refId === a.value.id)?.id)
 
 function nodeName(id: string) { return d.value?.graph?.nodes.find((n) => n.id === id)?.name || id }
@@ -206,6 +233,7 @@ async function load() {
   loading.value = true
   try {
     d.value = await artifactApi.detail(route.params.id as string)
+    modelIdx.value = 0
     if (route.query.tab) tab.value = String(route.query.tab)
   } finally {
     loading.value = false
@@ -267,6 +295,11 @@ blockquote { margin: 0; padding: 18px 24px; border-left: 3px solid var(--gold); 
 .speak { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; background: rgba(201,164,92,.08); border: 1px solid var(--line-strong); color: var(--gold-light); border-radius: 999px; padding: 4px 14px; cursor: pointer; font-size: 13px; font-family: var(--font-sans); letter-spacing: .05em; }
 .model-pane { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
 .viewer-box { height: 540px; border-radius: 16px; overflow: hidden; border: 1px solid var(--line); }
+.real-badge, .pending-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 12.5px; margin-bottom: 12px; }
+.real-badge { color: #1a140a; background: var(--gold); }
+.pending-badge { color: var(--gold-light); border: 1px dashed rgba(201,164,92,.45); }
+.model-note { font-size: 12px; line-height: 1.7; color: var(--text-3); margin-top: 10px; }
+.model-meta dd a { color: var(--gold-light); }
 .model-meta h4 { font-size: 17px; color: var(--gold-light); margin-bottom: 12px; letter-spacing: .06em; }
 .metric-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .metric-grid div { padding: 10px 12px; border-radius: 10px; background: rgba(201,164,92,.05); border: 1px solid var(--line); }

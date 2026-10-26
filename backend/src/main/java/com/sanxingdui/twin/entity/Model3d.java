@@ -40,8 +40,8 @@ public class Model3d extends BaseEntity {
     @Schema(description = "模型文件URL")
     private String modelUrl;
 
-    /** 文件格式：ply/splat/ksplat/spz */
-    @Schema(description = "文件格式：ply/splat/ksplat/spz")
+    /** 文件格式：ply/splat/ksplat/spz（3DGS）、glb/gltf（三维网格扫描） */
+    @Schema(description = "文件格式：ply/splat/ksplat/spz（3DGS）、glb/gltf（三维网格扫描）")
     private String format;
 
     /** 文件大小（字节） */
@@ -115,4 +115,16 @@ public class Model3d extends BaseEntity {
     /** 备注 */
     @Schema(description = "备注")
     private String remark;
+
+    /** 第三方模型来源链接（如 Sketchfab 页面） */
+    @Schema(description = "第三方模型来源链接（如 Sketchfab 页面）")
+    private String sourceUrl;
+
+    /** 模型作者（第三方模型署名） */
+    @Schema(description = "模型作者（第三方模型署名）")
+    private String author;
+
+    /** 授权协议（如 CC BY 4.0） */
+    @Schema(description = "授权协议（如 CC BY 4.0）")
+    private String license;
 }
