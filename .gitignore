@@ -7,3 +7,9 @@ backend/target/
 # 日志与本地配置
 *.log
 backend/src/main/resources/application-local.yml
+# 前端
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+node_modules/
+dist/

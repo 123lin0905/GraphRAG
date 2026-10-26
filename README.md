@@ -182,6 +182,25 @@ DB_PASSWORD=123456 LLM_API_KEY=sk-xxx java -jar target/sanxingdui-twin.jar
 bash backend/scripts/smoke_test.sh http://localhost:8080
 ```
 
+### 6. 启动前端（Vue 3）
+
+需要 Node.js 18+（推荐 20 LTS）。先确保后端已在 `:8080` 运行，开发服务器会把 `/api` 代理到后端。
+
+```bash
+cd frontend
+npm install                 # 国内可先执行 npm config set registry https://registry.npmmirror.com
+npm run dev                 # 开发模式，访问终端提示的地址（默认 http://localhost:5173）
+# 或构建生产包
+npm run build && npm run preview
+```
+
+- 游客端：首页 / 文物展厅 / 文物详情 / 3D 数字展厅 / 知识图谱 / 智能导览问答 / 导览路线 / 参观预约 / 我的
+- 管理后台：用 `admin` 或 `curator` 登录后，右上角头像菜单进入（数据大屏 + 23 个管理模块 + 系统配置）
+
+**3DGS 模型说明**：数据库中的模型地址目前是占位地址，查看器加载失败时会自动切换为公开示例模型，并显示“示例模型”角标。示例地址在 `frontend/src/config.ts` 的 `APP_CONFIG.sampleSplatUrl` 中配置，也可在 `frontend/.env.local` 里设置 `VITE_SAMPLE_SPLAT_URL` 覆盖。以后训练出自己的 `.ply/.splat/.ksplat` 文件，放到 `frontend/public/models/` 并在后台“3D 模型管理”里改 `model_url` 即可。
+
+**图片说明**：`frontend/public/static/images/` 中的文物图片为 AI 生成的示意图，并非博物馆实拍照片，正式答辩可替换为公开授权的实拍图（文件名保持不变即可）。
+
 ## 七、默认账号
 
 | 角色 | 用户名 | 密码 | 说明 |
@@ -250,8 +269,59 @@ es.addEventListener('done', () => es.close())
 5. **可追溯的问答记录**：每条回答保存检索到的三元组、文物与文献片段（JSON）、引用实体、Token 用量与耗时，可用于问答质量评估。
 6. **安全**：BCrypt 密码、无状态 JWT、每次请求重新加载用户（禁用/改角色即时生效）、RBAC + 方法级权限、操作日志对密码/API Key 脱敏、系统配置接口返回脱敏 API Key。
 
-## 十、后续阶段计划
+## 系统截图
 
-- 前端：Vue3 + Element Plus 管理后台与观众端、ECharts 数据大屏与知识图谱可视化。
-- 3DGS：基于 COLMAP + gaussian-splatting / gsplat 训练文物模型，Web 端使用 splat 查看器加载 `model_3d.model_url`，按 `camera_position / camera_target` 初始化视角，路线节点驱动 3D 漫游。
-- GraphRAG 增强：引入向量检索（如文献分块 + 向量索引）与图检索混合召回、社区摘要。
+**首页**
+
+![首页](docs/screenshots/01-home.png)
+
+**文物展厅**
+
+![文物展厅](docs/screenshots/03-artifacts.png)
+
+**文物详情**
+
+![文物详情](docs/screenshots/04-artifact-detail.png)
+
+**3D 数字展厅**
+
+![3D 数字展厅](docs/screenshots/07-hall3d.png)
+
+**知识图谱**
+
+![知识图谱](docs/screenshots/08-graph.png)
+
+**GraphRAG 智能导览问答**
+
+![GraphRAG 智能导览问答](docs/screenshots/11-guide-answer.png)
+
+**导览路线**
+
+![导览路线](docs/screenshots/13-route-detail.png)
+
+**参观预约**
+
+![参观预约](docs/screenshots/14-reservation.png)
+
+**运营数据大屏**
+
+![运营数据大屏](docs/screenshots/16-admin-dashboard.png)
+
+**文物管理**
+
+![文物管理](docs/screenshots/17-admin-artifacts.png)
+
+**系统配置（大模型）**
+
+![系统配置（大模型）](docs/screenshots/21-admin-configs.png)
+
+**移动端**
+
+![移动端](docs/screenshots/24-mobile-home.png)
+
+更多截图见 `docs/screenshots/`。
+
+## 十、后续计划
+
+- 3DGS：用手机拍摄或公开数据，基于 COLMAP + gaussian-splatting / gsplat 训练真实文物模型，替换示例模型。
+- GraphRAG 增强：文献分块 + 向量检索与图检索混合召回、社区摘要。
