@@ -28,6 +28,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'me', name: 'me', component: () => import('@/views/portal/Mine.vue'), meta: { title: '我的', auth: true } }
     ]
   },
+  { path: '/screen', name: 'screen', component: () => import('@/views/portal/BigScreen.vue'), meta: { title: '数据大屏' } },
   { path: '/login', name: 'login', component: () => import('@/views/portal/AuthPage.vue'), meta: { title: '登录' } },
   { path: '/register', name: 'register', component: () => import('@/views/portal/AuthPage.vue'), meta: { title: '注册' } },
   {

@@ -15,6 +15,7 @@
         <div class="hero-cta">
           <router-link to="/hall3d" class="btn-gold"><el-icon><VideoPlay /></el-icon>进入 3D 数字展厅</router-link>
           <router-link to="/guide" class="btn-ghost"><el-icon><ChatLineRound /></el-icon>问问 AI 导览员</router-link>
+          <router-link to="/screen" class="btn-ghost"><el-icon><DataAnalysis /></el-icon>数据大屏</router-link>
         </div>
         <div class="hero-stats">
           <div v-for="s in stats" :key="s.label" class="stat">

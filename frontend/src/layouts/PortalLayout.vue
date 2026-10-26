@@ -111,7 +111,8 @@ const navs = [
   { to: '/graph', label: '知识图谱' },
   { to: '/guide', label: '智能导览' },
   { to: '/routes', label: '导览路线' },
-  { to: '/reservation', label: '参观预约' }
+  { to: '/reservation', label: '参观预约' },
+  { to: '/screen', label: '数据大屏' }
 ]
 function isActive(to: string) {
   return to === '/' ? route.path === '/' : route.path.startsWith(to)
