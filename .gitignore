@@ -1,0 +1,9 @@
+# Maven
+backend/target/
+# IDE
+.idea/
+*.iml
+.vscode/
+# 日志与本地配置
+*.log
+backend/src/main/resources/application-local.yml

@@ -1,0 +1,9 @@
+# 生产环境：关闭接口文档，降低日志级别
+knife4j:
+  production: true
+springdoc:
+  api-docs:
+    enabled: false
+logging:
+  level:
+    com.sanxingdui.twin: info

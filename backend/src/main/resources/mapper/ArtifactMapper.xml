@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sanxingdui.twin.mapper.ArtifactMapper">
+
+    <!-- 文物视图公共查询列 -->
+    <sql id="voColumns">
+        a.*,
+        c.name  AS category_name,
+        p.name  AS period_name,
+        k.name  AS pit_name,
+        k.pit_code AS pit_code,
+        m.name  AS material_name,
+        h.name  AS hall_name,
+        EXISTS(SELECT 1 FROM model_3d md WHERE md.artifact_id = a.id AND md.deleted = 0 AND md.status = 1) AS has_model
+    </sql>
+
+    <sql id="voJoins">
+        FROM artifact a
+        LEFT JOIN artifact_category c ON c.id = a.category_id AND c.deleted = 0
+        LEFT JOIN dynasty_period p    ON p.id = a.period_id AND p.deleted = 0
+        LEFT JOIN excavation_pit k    ON k.id = a.pit_id AND k.deleted = 0
+        LEFT JOIN material m          ON m.id = a.material_id AND m.deleted = 0
+        LEFT JOIN exhibition_hall h   ON h.id = a.hall_id AND h.deleted = 0
+    </sql>
+
+    <select id="selectVoPage" resultType="com.sanxingdui.twin.vo.ArtifactVO">
+        SELECT <include refid="voColumns"/>
+        <include refid="voJoins"/>
+        <where>
+            a.deleted = 0
+            <if test="q.keyword != null and q.keyword != ''">
+                AND (a.name LIKE CONCAT('%', #{q.keyword}, '%')
+                  OR a.alias LIKE CONCAT('%', #{q.keyword}, '%')
+                  OR a.artifact_no LIKE CONCAT('%', #{q.keyword}, '%')
+                  OR a.description LIKE CONCAT('%', #{q.keyword}, '%'))
+            </if>
+            <if test="q.categoryId != null">
+                AND (a.category_id = #{q.categoryId}
+                  OR a.category_id IN (SELECT id FROM artifact_category WHERE parent_id = #{q.categoryId} AND deleted = 0))
+            </if>
+            <if test="q.pitId != null">AND a.pit_id = #{q.pitId}</if>
+            <if test="q.materialId != null">AND a.material_id = #{q.materialId}</if>
+            <if test="q.periodId != null">AND a.period_id = #{q.periodId}</if>
+            <if test="q.hallId != null">AND a.hall_id = #{q.hallId}</if>
+            <if test="q.isTreasure != null">AND a.is_treasure = #{q.isTreasure}</if>
+            <if test="q.status != null">AND a.status = #{q.status}</if>
+        </where>
+        <choose>
+            <when test="q.orderBy == 'hot'">ORDER BY a.view_count DESC, a.id ASC</when>
+            <when test="q.orderBy == 'new'">ORDER BY a.created_at DESC, a.id DESC</when>
+            <otherwise>ORDER BY a.is_treasure DESC, a.id ASC</otherwise>
+        </choose>
+    </select>
+
+    <select id="selectVoById" resultType="com.sanxingdui.twin.vo.ArtifactVO">
+        SELECT <include refid="voColumns"/>
+        <include refid="voJoins"/>
+        WHERE a.id = #{id} AND a.deleted = 0
+    </select>
+
+    <select id="selectVoByIds" resultType="com.sanxingdui.twin.vo.ArtifactVO">
+        SELECT <include refid="voColumns"/>
+        <include refid="voJoins"/>
+        WHERE a.deleted = 0 AND a.id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY a.view_count DESC
+    </select>
+</mapper>
