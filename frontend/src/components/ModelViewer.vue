@@ -8,6 +8,7 @@
     :source-url="model.sourceUrl"
     :license="model.license"
     :model-title="model.name"
+    :kind="meshKind(model)"
     :show-tips="showTips"
     :fit-width="fitWidth"
     @status="(s: string) => emit('status', s)"
@@ -29,14 +30,14 @@
 <script setup lang="ts">
 /**
  * 统一的三维查看器：按模型格式选择加载器
- *  - glb / gltf：three.js GLTFLoader（真实三维扫描网格）
+ *  - glb / gltf：three.js GLTFLoader（真实三维扫描 / AI 复原 / 程序化建模网格）
  *  - splat / ksplat / ply / spz：3D 高斯泼溅查看器（文件不可访问时显示“模型采集中”）
  *  - demo：公开 3DGS 示例场景，明确标注为技术演示
  */
 import GltfViewer from './GltfViewer.vue'
 import SplatViewer from './SplatViewer.vue'
 import type { Model3d } from '@/api/types'
-import { isMeshModel, parseVec } from '@/utils/format'
+import { isMeshModel, meshKind, parseVec } from '@/utils/format'
 
 withDefaults(defineProps<{ model?: Model3d | null; demo?: boolean; showTips?: boolean; fitWidth?: number }>(), { demo: false, showTips: true, fitWidth: 1 })
 const emit = defineEmits<{ (e: 'status', s: string): void }>()

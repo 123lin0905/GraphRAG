@@ -236,6 +236,8 @@ export interface Overview {
   treasureCount: number
   pitCount: number
   modelCount: number
+  scanModelCount?: number
+  aiModelCount?: number
   gaussianTotal: number
   entityCount: number
   relationCount: number

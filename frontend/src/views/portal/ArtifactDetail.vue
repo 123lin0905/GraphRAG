@@ -83,8 +83,24 @@
                   </el-select>
                   <h4>{{ curModel?.name }}</h4>
 
+                  <!-- AI 复原 / 程序化建模（项目自制网格，非扫描） -->
+                  <template v-if="isMeshModel(curModel) && meshKind(curModel) !== 'scan'">
+                    <div class="ai-badge"><el-icon><MagicStick /></el-icon>{{ MESH_KIND_LABEL[meshKind(curModel)] }} · 非真实扫描</div>
+                    <div class="metric-grid">
+                      <div><label>格式</label><b>{{ (curModel?.format || '').toUpperCase() }}</b></div>
+                      <div><label>文件大小</label><b>{{ fmtBytes(curModel?.fileSize) }}</b></div>
+                    </div>
+                    <dl>
+                      <dt>生成方式</dt><dd>{{ curModel?.captureDevice || '—' }}</dd>
+                      <dt>制作</dt><dd>{{ curModel?.author || '—' }}</dd>
+                      <dt>授权说明</dt><dd>{{ curModel?.license || '—' }}</dd>
+                      <dt>模型地址</dt><dd class="mono">{{ curModel?.modelUrl }}</dd>
+                    </dl>
+                    <p class="model-note">{{ curModel?.remark }}</p>
+                  </template>
+
                   <!-- 真实三维扫描（GLB/GLTF）：只展示真实信息，不展示 3DGS 训练指标 -->
-                  <template v-if="isMeshModel(curModel)">
+                  <template v-else-if="isMeshModel(curModel)">
                     <div class="real-badge"><el-icon><CircleCheck /></el-icon>真实三维扫描模型</div>
                     <div class="metric-grid">
                       <div><label>格式</label><b>{{ (curModel?.format || '').toUpperCase() }}</b></div>
@@ -195,7 +211,7 @@ import SectionHeading from '@/components/SectionHeading.vue'
 import ReviewPanel from '@/components/ReviewPanel.vue'
 import { artifactApi, favoriteApi } from '@/api'
 import type { ArtifactDetail, GraphNode } from '@/api/types'
-import { ARTIFACT_STATUS, fmtBytes, fmtNum, isMeshModel, sortModels } from '@/utils/format'
+import { ARTIFACT_STATUS, MESH_KIND_LABEL, fmtBytes, fmtNum, isMeshModel, meshKind, sortModels } from '@/utils/format'
 import { useAuthStore } from '@/stores/auth'
 
 const IMG_TYPE: Record<string, string> = { PHOTO: '实拍', DETAIL: '细节', LINE: '线图', TRAIN: '3DGS 训练视图', RENDER: '三维扫描渲染' }
@@ -295,8 +311,9 @@ blockquote { margin: 0; padding: 18px 24px; border-left: 3px solid var(--gold); 
 .speak { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; background: rgba(201,164,92,.08); border: 1px solid var(--line-strong); color: var(--gold-light); border-radius: 999px; padding: 4px 14px; cursor: pointer; font-size: 13px; font-family: var(--font-sans); letter-spacing: .05em; }
 .model-pane { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
 .viewer-box { height: 540px; border-radius: 16px; overflow: hidden; border: 1px solid var(--line); }
-.real-badge, .pending-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 12.5px; margin-bottom: 12px; }
+.real-badge, .pending-badge, .ai-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 12.5px; margin-bottom: 12px; }
 .real-badge { color: #1a140a; background: var(--gold); }
+.ai-badge { color: #d9ccff; border: 1px solid rgba(164,143,208,.55); background: rgba(48,36,78,.5); }
 .pending-badge { color: var(--gold-light); border: 1px dashed rgba(201,164,92,.45); }
 .model-note { font-size: 12px; line-height: 1.7; color: var(--text-3); margin-top: 10px; }
 .model-meta dd a { color: var(--gold-light); }

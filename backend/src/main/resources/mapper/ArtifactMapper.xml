@@ -11,7 +11,7 @@
         k.pit_code AS pit_code,
         m.name  AS material_name,
         h.name  AS hall_name,
-        EXISTS(SELECT 1 FROM model_3d md WHERE md.artifact_id = a.id AND md.deleted = 0 AND md.status = 1) AS has_model
+        EXISTS(SELECT 1 FROM model_3d md WHERE md.artifact_id = a.id AND md.deleted = 0 AND md.status = 1 AND (md.remark IS NULL OR md.remark NOT LIKE '占位记录%')) AS has_model
     </sql>
 
     <sql id="voJoins">

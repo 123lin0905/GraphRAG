@@ -31,8 +31,8 @@ lines.append('''-- =============================================================
 -- 三星堆文物数字孪生与智能导览系统 —— 演示数据
 -- 说明：
 --   1. 文物史实部分仅采用公开报道中较为确定的信息，尺寸重量等均为约数；
---   2. 3DGS 模型（splat/ply/ksplat/spz）URL 为占位路径、训练指标为演示用数值，需在模型训练后替换；
---      format='glb' 的模型为真实三维扫描（Sketchfab 公开模型，CC BY 4.0，见 source_url/author/license 字段），不含任何训练指标；
+--   2. 3DGS 模型（splat/ply/ksplat/spz）URL 为占位路径、训练指标为演示用数值（remark 以“占位记录”开头，统计时排除），需在模型训练后替换；
+--      format='glb' 的模型：author 为 Sketchfab 作者的是真实三维扫描（CC BY 4.0）；author 为“AI 复原（Hunyuan3D-2）”或“程序化建模”的是项目自制复原模型（非扫描）；均不含训练指标；
 --   3. 客流、问答等运营数据为模拟数据；日期相对当前日期生成，保证大屏趋势图始终有数据。
 -- 默认账号：admin/admin123（管理员）  curator/curator123（馆员）  visitor/visitor123（游客）
 -- =====================================================================
@@ -289,6 +289,41 @@ for aid, name, fn, size, title, author, url, dflt in SKETCHFAB_GLB:
                    f'/static/images/models/glb/{fn}.jpg', dflt, 1,
                    f'来源：Sketchfab「{title}」，作者 {author}，CC BY 4.0 授权（经 Objaverse 镜像获取，未作几何修改）',
                    url, author, 'CC BY 4.0'))
+# AI 复原 / 程序化建模的网格模型（项目自制）：
+#  - AI 复原：以文物公开照片为输入，用 Hunyuan3D-2（腾讯开源图生 3D 模型，Hugging Face 免费 GPU Space）单图生成几何，
+#    再统一赋予青铜/黄金/玉/陶 PBR 材质、减面并居中；属于“AI 推测复原”，不等同于真实扫描，细节可能与原器不符。
+#  - 程序化建模：按公开资料中的形制与比例用脚本（trimesh）参数化生成，仅表现基本形制。
+#  两者均无 3DGS 训练指标（NULL），授权为项目自制。
+AI_GLB = [
+    # (文物ID, 模型名称, 文件名, 方式 'ai'|'proc', 材质说明)
+    (1, '青铜神树 程序化模型', 'shenshu', 'proc', '青铜 PBR'),  # AI 单图生成结果为扁平片状，不可用，改为程序化建模
+    (2, '青铜纵目面具 AI 复原模型', 'zongmu', 'ai', '青铜 PBR'),
+    (3, '青铜大立人像 AI 复原模型', 'dalirenxiang', 'ai', '青铜 PBR'),
+    (5, '金杖 程序化模型', 'jinzhang', 'proc', '黄金 PBR'),
+    (9, '祭祀坑出土象牙 程序化模型', 'xiangya', 'proc', '象牙 PBR'),
+    (10, '玉边璋 程序化模型', 'yuzhang', 'proc', '玉 PBR'),
+    (11, '青铜太阳形器 程序化模型', 'taiyang', 'proc', '青铜 PBR'),
+    (14, '龟背形网格状器 程序化模型', 'guibei', 'proc', '青铜 PBR'),
+    (17, '青铜眼形器 程序化模型', 'yanxing', 'proc', '青铜 PBR'),
+]
+AI_AUTHOR = {'ai': 'AI 复原（Hunyuan3D-2）', 'proc': '程序化建模'}
+AI_DEVICE = {'ai': 'AI 单图生成（Hunyuan3D-2，输入为文物公开照片）', 'proc': '程序化建模（trimesh 参数化生成）'}
+_glb_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'frontend', 'public', 'models', 'glb')
+ai_ids = {x[0] for x in AI_GLB}
+# 有了可交互网格的文物，其占位 3DGS 记录降为非默认，并标注为占位
+# 所有 3DGS 记录均为占位（尚未训练）：remark 统一以“占位记录”开头，大屏统计据此排除其演示指标
+models = [m[:21] + ((0,) if m[0] in ai_ids else m[21:22]) + m[22:23]
+          + ('占位记录：3DGS 模型尚未训练，文件与指标为演示值' + ('；当前默认展示网格模型' if m[0] in ai_ids else f'（{m[23]}）'),) + m[24:]
+          if m[5] != 'glb' else m for m in models]
+for aid, name, fn, kind, mat in AI_GLB:
+    fp = os.path.join(_glb_dir, f'{fn}.glb')
+    size = os.path.getsize(fp) if os.path.exists(fp) else None
+    remark = ('AI 推测复原（非真实扫描）：Hunyuan3D-2 由文物照片单图生成几何，后处理赋予' if kind == 'ai'
+              else '程序化建模（非真实扫描）：依据公开资料的形制比例参数化生成，赋予') + mat + '材质，仅供教学演示'
+    models.append((aid, None, name, 'OBJECT', f'/models/glb/{fn}.glb', 'glb', size, None, None, None,
+                   AI_DEVICE[kind], None, None, None, None, None, None, None, None, None,
+                   f'/static/images/artifacts/{fn if fn != "yanxing" else "yanxingqi"}.jpg', 1, 1,
+                   remark, None, AI_AUTHOR[kind], '项目自制，仅供教学演示'))
 insert('model_3d', M, models)
 
 insert('restoration_record', ['artifact_id', 'restorer', 'start_date', 'end_date', 'condition_before', 'method', 'condition_after', 'status', 'remark'], [

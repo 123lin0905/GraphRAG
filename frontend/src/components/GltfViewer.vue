@@ -20,7 +20,8 @@
 
     <!-- 角标 -->
     <div class="gv-badges">
-      <span v-if="state === 'ready'" class="chip gold"><el-icon><CircleCheck /></el-icon>真实三维扫描</span>
+      <span v-if="state === 'ready' && kind === 'scan'" class="chip gold"><el-icon><CircleCheck /></el-icon>真实三维扫描</span>
+      <span v-else-if="state === 'ready'" class="chip ai"><el-icon><MagicStick /></el-icon>{{ kind === 'ai' ? 'AI 复原模型 · 非扫描' : '程序化建模 · 非扫描' }}</span>
       <span class="chip">{{ (format || 'glb').toUpperCase() }} 网格</span>
     </div>
 
@@ -35,8 +36,11 @@
       <span><b>左键</b> 旋转</span><span><b>右键</b> 平移</span><span><b>滚轮</b> 缩放</span>
     </div>
 
-    <!-- 署名（CC BY 4.0 要求） -->
-    <div v-if="author || sourceUrl" class="gv-credit">
+    <!-- 署名（CC BY 4.0 要求）；项目自制模型显示生成方式 -->
+    <div v-if="kind !== 'scan'" class="gv-credit">
+      模型：{{ modelTitle }} · {{ author }} · {{ license || '项目自制' }}
+    </div>
+    <div v-else-if="author || sourceUrl" class="gv-credit">
       模型：<a v-if="sourceUrl" :href="sourceUrl" target="_blank" rel="noopener">{{ modelTitle || 'Sketchfab' }}</a><template v-else>{{ modelTitle }}</template>
       <template v-if="author"> · 作者 {{ author }}</template>
       <template v-if="license"> · <a href="https://creativecommons.org/licenses/by/4.0/deed.zh-hans" target="_blank" rel="noopener">{{ license }}</a></template>
@@ -64,8 +68,10 @@ const props = withDefaults(
     autoRotateDefault?: boolean
     /** 取景时可用的横向比例（展厅两侧有浮层时 < 1） */
     fitWidth?: number
+    /** 模型来源类型：scan 真实扫描 / ai AI 复原 / procedural 程序化建模 */
+    kind?: 'scan' | 'ai' | 'procedural'
   }>(),
-  { showTips: true, autoRotateDefault: true, fitWidth: 1 }
+  { showTips: true, autoRotateDefault: true, fitWidth: 1, kind: 'scan' }
 )
 const emit = defineEmits<{ (e: 'status', s: string): void }>()
 
@@ -329,6 +335,7 @@ defineExpose({ reload: load, resetView })
 .gv-badges { position: absolute; top: 14px; left: 14px; z-index: 4; display: flex; gap: 8px; flex-wrap: wrap; }
 .gv-badges .chip { backdrop-filter: blur(8px); background-color: rgba(10,14,12,.6); }
 .gv-badges .chip.gold { color: #1a140a; background: var(--gold); border-color: var(--gold); }
+.gv-badges .chip.ai { color: #d9ccff; border-color: rgba(164,143,208,.55); background-color: rgba(48,36,78,.62); }
 .gv-tools { position: absolute; z-index: 4; top: 14px; right: 14px; display: flex; gap: 6px; }
 .tool { display: inline-flex; align-items: center; gap: 4px; height: 30px; padding: 0 10px; border-radius: 999px; cursor: pointer; font-size: 12px;
   background: rgba(10,14,12,.62); border: 1px solid var(--line); color: var(--text-2); backdrop-filter: blur(8px); transition: all .2s; }

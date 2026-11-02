@@ -25,6 +25,7 @@
               <b class="ellipsis">{{ e.title }}</b>
               <span class="ellipsis">{{ e.sub }}</span>
               <i v-if="e.kind === 'real'" class="tag real">真实扫描</i>
+              <i v-else-if="e.kind === 'ai'" class="tag ai">{{ e.models[0] && meshKind(e.models[0]) === 'procedural' ? '程序化建模' : 'AI 复原' }}</i>
               <i v-else-if="e.kind === 'splat'" class="tag splat">3DGS</i>
               <i v-else-if="e.kind === 'pending'" class="tag pending">模型采集中</i>
               <i v-else class="tag demo">技术演示 · 非文物</i>
@@ -60,6 +61,29 @@
             <dt>采集方式</dt><dd>{{ curModel.captureDevice || '—' }}</dd>
             <dt>模型作者</dt><dd>{{ curModel.author || '—' }}</dd>
             <dt>来源</dt><dd><a v-if="curModel.sourceUrl" :href="curModel.sourceUrl" target="_blank" rel="noopener">Sketchfab 原页面 ↗</a><span v-else>—</span></dd>
+          </dl>
+        </template>
+
+        <!-- AI 复原 / 程序化建模（项目自制，非扫描） -->
+        <template v-else-if="cur.kind === 'ai' && curModel">
+          <p class="clamp-3">{{ art?.description }}</p>
+          <el-select v-if="cur.models.length > 1" v-model="modelIdx" size="small" class="alt-select">
+            <el-option v-for="(m, i) in cur.models" :key="m.id" :label="m.name" :value="i" />
+          </el-select>
+          <div class="notice ai">
+            <el-icon><MagicStick /></el-icon>
+            <span v-if="meshKind(curModel) === 'ai'">AI 推测复原：由 Hunyuan3D-2 以文物公开照片单图生成几何，再统一赋予材质。<b>并非真实扫描</b>，细节可能与原器不符。</span>
+            <span v-else>程序化建模：依据公开资料中的形制与比例，用脚本参数化生成，仅表现基本形制。<b>并非真实扫描</b>。</span>
+          </div>
+          <div class="m-grid">
+            <div><label>模型类型</label><b>{{ MESH_KIND_LABEL[meshKind(curModel)] }}</b></div>
+            <div><label>格式</label><b>{{ (curModel.format || '').toUpperCase() }} 网格</b></div>
+            <div><label>文件大小</label><b>{{ fmtBytes(curModel.fileSize) }}</b></div>
+            <div><label>授权</label><b class="sm">项目自制</b></div>
+          </div>
+          <dl class="src">
+            <dt>生成方式</dt><dd>{{ curModel.captureDevice || '—' }}</dd>
+            <dt>说明</dt><dd>{{ curModel.license || '—' }}</dd>
           </dl>
         </template>
 
@@ -108,6 +132,11 @@
         </el-table-column>
         <el-table-column label="授权" prop="license" width="100" />
       </el-table>
+      <p class="credit-intro">
+        标注“AI 复原”的模型由腾讯开源图生 3D 模型 <a href="https://huggingface.co/tencent/Hunyuan3D-2" target="_blank" rel="noopener">Hunyuan3D-2</a>
+        以文物公开照片单图生成几何、再由本项目统一赋予青铜/黄金/玉/陶材质并减面；标注“程序化建模”的模型依据公开资料的形制比例用脚本参数化生成。
+        二者均为<b>项目自制的推测性复原</b>，并非真实扫描，仅供教学演示（共 {{ aiCount }} 个）。
+      </p>
       <p class="credit-intro muted">“3DGS 渲染技术演示”使用的公开示例场景：{{ demoSource }}，与三星堆文物无关。</p>
     </el-dialog>
   </div>
@@ -121,9 +150,9 @@ import BronzeImage from '@/components/BronzeImage.vue'
 import SunLogo from '@/components/SunLogo.vue'
 import { artifactApi, dictApi } from '@/api'
 import type { Artifact, Model3d } from '@/api/types'
-import { fmtBytes, fmtNum, isMeshModel, sortModels } from '@/utils/format'
+import { MESH_KIND_LABEL, fmtBytes, fmtNum, isMeshModel, meshKind, sortModels } from '@/utils/format'
 
-type Kind = 'real' | 'splat' | 'pending' | 'demo'
+type Kind = 'real' | 'ai' | 'splat' | 'pending' | 'demo'
 interface Entry { key: string; kind: Kind; title: string; sub: string; cover?: string; artifactId?: number; models: Model3d[] }
 
 const route = useRoute()
@@ -143,14 +172,17 @@ const art = computed(() => (cur.value?.artifactId ? arts.value[cur.value.artifac
 const curModel = computed(() => cur.value?.models[modelIdx.value])
 const groups = computed(() => [
   { kind: 'real', title: '真实三维扫描', items: entries.value.filter((e) => e.kind === 'real' || e.kind === 'splat') },
+  { kind: 'ai', title: 'AI 复原模型（非扫描）', items: entries.value.filter((e) => e.kind === 'ai') },
   { kind: 'pending', title: '模型采集中', items: entries.value.filter((e) => e.kind === 'pending') },
   { kind: 'demo', title: '技术演示', items: entries.value.filter((e) => e.kind === 'demo') }
 ])
 const credits = computed(() =>
   allModels.value
-    .filter((m) => isMeshModel(m) && m.sourceUrl)
+    .filter((m) => isMeshModel(m) && m.sourceUrl && meshKind(m) === 'scan')
     .map((m) => ({ artifact: (m.artifactId && arts.value[m.artifactId]?.name) || m.name, name: m.name, author: m.author, url: m.sourceUrl, license: m.license }))
 )
+
+const aiCount = computed(() => allModels.value.filter((m) => isMeshModel(m) && meshKind(m) !== 'scan').length)
 
 function select(e: Entry) { cur.value = e; modelIdx.value = 0 }
 watch(cur, () => { modelIdx.value = 0 })
@@ -182,10 +214,19 @@ onMounted(async () => {
     const aid = group[0].artifactId
     const a = aid ? arts.value[aid] : undefined
     const title = a?.name || group[0].name.replace(/ ?3DGS.*$/, '')
-    const real = sortModels(group.filter(isMeshModel))
+    const real = sortModels(group.filter((m) => isMeshModel(m) && meshKind(m) === 'scan'))
+    const ai = sortModels(group.filter((m) => isMeshModel(m) && meshKind(m) !== 'scan'))
+    if (!real.length && ai.length) {
+      const k = meshKind(ai[0])
+      list.push({ key, kind: 'ai', title, artifactId: aid, models: ai, cover: ai[0].thumbnailUrl || a?.coverUrl,
+        sub: `${k === 'ai' ? 'AI 复原 · Hunyuan3D-2' : '程序化建模'} · ${(ai[0].format || '').toUpperCase()}` })
+      continue
+    }
     if (real.length) {
+      const nScan = real.length
+      real.push(...ai)
       list.push({ key, kind: 'real', title, artifactId: aid, models: real, cover: real[0].thumbnailUrl || a?.coverUrl,
-        sub: `真实扫描 · ${(real[0].format || '').toUpperCase()}${real.length > 1 ? ` · ${real.length} 个扫描版本` : ''}` })
+        sub: `真实扫描 · ${(real[0].format || '').toUpperCase()}${nScan > 1 ? ` · ${nScan} 个扫描版本` : ''}` })
       continue
     }
     const splats = sortModels(group)
@@ -194,7 +235,8 @@ onMounted(async () => {
       cover: a?.coverUrl || '/static/images/artifacts/shentan_detail.jpg',
       sub: ok ? `3DGS · ${(splats[0].format || '').toUpperCase()}` : `${group[0].modelType === 'SCENE' ? '展厅场景' : '单体文物'} · 3DGS 模型采集中` })
   }
-  list.sort((x, y) => ['real', 'splat', 'pending'].indexOf(x.kind) - ['real', 'splat', 'pending'].indexOf(y.kind) || (x.artifactId || 999) - (y.artifactId || 999))
+  const ORDER = ['real', 'splat', 'ai', 'pending']
+  list.sort((x, y) => ORDER.indexOf(x.kind) - ORDER.indexOf(y.kind) || (x.artifactId || 999) - (y.artifactId || 999))
   list.push({ key: 'demo', kind: 'demo', title: '3DGS 渲染技术演示', sub: '公开示例场景 · 非三星堆文物', models: [], cover: '/static/images/hero.jpg' })
   entries.value = list
   const want = Number(route.query.artifact)
@@ -233,6 +275,10 @@ onMounted(async () => {
 .sw-txt span { font-size: 11.5px; color: var(--text-3); max-width: 200px; }
 .tag { font-style: normal; font-size: 10.5px; line-height: 1; padding: 3px 7px; border-radius: 999px; margin-top: 3px; letter-spacing: .05em; }
 .tag.real { color: #1a140a; background: var(--gold); }
+.tag.ai { color: #d9ccff; border: 1px solid rgba(164,143,208,.55); background: rgba(48,36,78,.5); }
+.notice.ai { border-color: rgba(164,143,208,.45); background: rgba(80,62,130,.12); }
+.notice.ai .el-icon { color: #b9a6e8; }
+.m-grid b.sm { font-size: 13px; }
 .tag.splat { color: #9fd4bd; border: 1px solid rgba(111,174,149,.35); }
 .tag.pending { color: var(--text-3); border: 1px dashed rgba(201,164,92,.35); }
 .tag.demo { color: #e59a86; border: 1px solid rgba(181,82,59,.4); }

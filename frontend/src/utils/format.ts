@@ -59,7 +59,22 @@ export const MESH_FORMATS = ['glb', 'gltf']
 export function isMeshModel(m?: { format?: string | null } | null): boolean {
   return !!m && MESH_FORMATS.includes(String(m.format || '').toLowerCase())
 }
+/**
+ * 网格模型的来源类型：
+ *  - scan：第三方真实三维扫描（有 sourceUrl，如 Sketchfab CC BY 4.0）
+ *  - ai：AI 单图生成复原（Hunyuan3D-2）
+ *  - procedural：程序化建模（按形制参数生成）
+ */
+export type MeshKind = 'scan' | 'ai' | 'procedural'
+export function meshKind(m?: { author?: string | null; captureDevice?: string | null; sourceUrl?: string | null } | null): MeshKind {
+  const t = `${m?.author || ''} ${m?.captureDevice || ''}`
+  if (/程序化/.test(t)) return 'procedural'
+  if (/Hunyuan|AI 复原|AI 单图/i.test(t)) return 'ai'
+  return 'scan'
+}
+export const MESH_KIND_LABEL: Record<MeshKind, string> = { scan: '真实三维扫描', ai: 'AI 复原模型', procedural: '程序化建模' }
 /** 同一文物的模型排序：默认模型优先，其次真实扫描，再按 ID */
-export function sortModels<T extends { id: number; isDefault?: number; format?: string }>(list: T[]): T[] {
-  return [...list].sort((a, b) => (b.isDefault || 0) - (a.isDefault || 0) || Number(isMeshModel(b)) - Number(isMeshModel(a)) || a.id - b.id)
+export function sortModels<T extends { id: number; isDefault?: number; format?: string; author?: string; captureDevice?: string }>(list: T[]): T[] {
+  const rank = (m: T) => (isMeshModel(m) ? (meshKind(m) === 'scan' ? 2 : 1) : 0)
+  return [...list].sort((a, b) => (b.isDefault || 0) - (a.isDefault || 0) || rank(b) - rank(a) || a.id - b.id)
 }

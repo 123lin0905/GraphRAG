@@ -17,7 +17,7 @@
 
     <div class="kpis">
       <KpiCard label="馆藏文物" :value="ov?.artifactCount" unit="件" icon="Trophy" color="#E0B866" :sub="`镇馆之宝 ${ov?.treasureCount ?? '—'} 件`" />
-      <KpiCard label="3DGS 模型" :value="ov?.modelCount" unit="个" icon="Box" color="#7FB8A1" :sub="`高斯基元 ${fmtNum(ov?.gaussianTotal)}`" />
+      <KpiCard label="三维模型" :value="ov?.modelCount" unit="个" icon="Box" color="#7FB8A1" :sub="`真实扫描 ${ov?.scanModelCount ?? 0} · AI/程序化复原 ${ov?.aiModelCount ?? 0}`" />
       <KpiCard label="图谱实体" :value="ov?.entityCount" unit="个" icon="Share" color="#A48FD0" :sub="`关系 ${ov?.relationCount ?? '—'} 条 · 文献 ${ov?.literatureCount ?? '—'} 篇`" />
       <KpiCard label="近30天线下客流" :value="ov?.visitors30d" icon="UserFilled" color="#D79A5B" format="wan" :sub="`注册用户 ${ov?.userCount ?? '—'} 人`" />
       <KpiCard label="智能问答" :value="ov?.qaQuestionCount" unit="次" icon="ChatDotRound" color="#8DA4D8" :sub="`会话 ${ov?.qaSessionCount ?? '—'} 个`" />
@@ -73,7 +73,7 @@
 
     <div class="row r2">
       <div class="card">
-        <div class="c-h"><span><i></i>3DGS 重建质量（PSNR × SSIM，气泡=高斯数）</span></div>
+        <div class="c-h"><span><i></i>3DGS 重建质量（PSNR × SSIM，气泡=高斯数）</span><em class="tag">占位记录不计入</em></div>
         <EChart :option="qualityOpt" height="300px" />
       </div>
       <div class="card">
@@ -219,6 +219,7 @@ const kgOpt = computed(() => {
 })
 const qualityOpt = computed(() => {
   const d = models.value?.quality || []
+  if (!d.length) return { graphic: { type: 'text', left: 'center', top: 'middle', style: { text: '暂无已完成训练的 3DGS 模型\n（占位记录的演示指标不计入统计）', fill: '#8a8473', fontSize: 13, align: 'center', lineHeight: 22 } } }
   return {
     tooltip: { ...TOOLTIP, formatter: (p: any) => `<b style="color:#E8CB8A">${p.data[3]}</b><br/>PSNR ${p.data[0]} dB · SSIM ${p.data[1]}<br/>高斯数 ${fmtNum(p.data[2])} · ${p.data[4]}` },
     grid: { left: 50, right: 30, top: 24, bottom: 36 },

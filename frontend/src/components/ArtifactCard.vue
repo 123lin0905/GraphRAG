@@ -3,7 +3,7 @@
     <BronzeImage :src="a.coverUrl" :alt="a.name" ratio="4 / 3.4">
       <div class="badges">
         <span v-if="a.isTreasure" class="chip treasure"><el-icon><Star /></el-icon>镇馆之宝</span>
-        <span v-if="a.hasModel" class="chip jade">3DGS</span>
+        <span v-if="a.hasModel" class="chip jade">3D</span>
       </div>
       <div class="shade"></div>
     </BronzeImage>

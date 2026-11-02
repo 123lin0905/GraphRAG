@@ -15,9 +15,13 @@ public class DashboardOverviewVO {
     private Long treasureCount;
     @Schema(description = "祭祀坑数")
     private Long pitCount;
-    @Schema(description = "3DGS模型数")
+    @Schema(description = "可交互三维模型数（不含占位 3DGS 记录）")
     private Long modelCount;
-    @Schema(description = "高斯基元总数")
+    @Schema(description = "真实扫描模型数（第三方公开扫描）")
+    private Long scanModelCount;
+    @Schema(description = "AI 复原 / 程序化建模模型数（项目自制）")
+    private Long aiModelCount;
+    @Schema(description = "高斯基元总数（不含占位 3DGS 记录）")
     private Long gaussianTotal;
     @Schema(description = "知识图谱实体数")
     private Long entityCount;

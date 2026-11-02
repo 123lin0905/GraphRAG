@@ -61,15 +61,25 @@ public class DashboardServiceImpl implements DashboardService {
     private final KnowledgeGraphService kgService;
     private final ArtifactService artifactService;
 
+    /** 占位 3DGS 记录的 remark 前缀 */
+    private static final String PLACEHOLDER = "占位记录";
+
     @Override
     public DashboardOverviewVO overview() {
         DashboardOverviewVO vo = new DashboardOverviewVO();
         vo.setArtifactCount(artifactMapper.selectCount(null));
         vo.setTreasureCount(artifactMapper.selectCount(new LambdaQueryWrapper<Artifact>().eq(Artifact::getIsTreasure, 1)));
         vo.setPitCount(pitMapper.selectCount(null));
-        vo.setModelCount(model3dMapper.selectCount(new LambdaQueryWrapper<Model3d>().eq(Model3d::getStatus, 1)));
+        // 占位 3DGS 记录（remark 以“占位记录”开头：文件与训练指标均为演示值）不计入模型统计
+        vo.setModelCount(model3dMapper.selectCount(new LambdaQueryWrapper<Model3d>().eq(Model3d::getStatus, 1)
+                .and(w -> w.isNull(Model3d::getRemark).or().notLikeRight(Model3d::getRemark, PLACEHOLDER))));
+        vo.setScanModelCount(model3dMapper.selectCount(new LambdaQueryWrapper<Model3d>().eq(Model3d::getStatus, 1)
+                .in(Model3d::getFormat, "glb", "gltf").isNotNull(Model3d::getSourceUrl)));
+        vo.setAiModelCount(model3dMapper.selectCount(new LambdaQueryWrapper<Model3d>().eq(Model3d::getStatus, 1)
+                .in(Model3d::getFormat, "glb", "gltf").isNull(Model3d::getSourceUrl)));
         List<Map<String, Object>> g = model3dMapper.selectMaps(new QueryWrapper<Model3d>()
-                .select("IFNULL(SUM(gaussian_count), 0) AS total").eq("status", 1));
+                .select("IFNULL(SUM(gaussian_count), 0) AS total").eq("status", 1)
+                .and(w -> w.isNull("remark").or().notLikeRight("remark", PLACEHOLDER)));
         vo.setGaussianTotal(g.isEmpty() || g.get(0) == null ? 0L : ((Number) g.get(0).get("total")).longValue());
         vo.setEntityCount((long) kgService.snapshot().getEntities().size());
         vo.setRelationCount((long) kgService.snapshot().getRelations().size());

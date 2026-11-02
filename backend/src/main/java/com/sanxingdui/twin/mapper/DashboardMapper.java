@@ -50,13 +50,15 @@ public interface DashboardMapper {
             + "GROUP BY h.id, h.name ORDER BY h.sort")
     List<NameValueVO> countByHall();
 
-    /** 3DGS 模型格式分布 */
-    @Select("SELECT format AS name, COUNT(*) AS value FROM model_3d WHERE deleted = 0 GROUP BY format ORDER BY value DESC")
+    /** 三维模型格式分布（不含占位 3DGS 记录） */
+    @Select("SELECT format AS name, COUNT(*) AS value FROM model_3d WHERE deleted = 0 "
+            + "AND (remark IS NULL OR remark NOT LIKE '占位记录%') GROUP BY format ORDER BY value DESC")
     List<NameValueVO> countModelByFormat();
 
-    /** 3DGS 模型质量（PSNR/SSIM/LPIPS） */
+    /** 3DGS 模型质量（PSNR/SSIM/LPIPS）；占位记录的演示指标不计入 */
     @Select("SELECT name, format, psnr, ssim, lpips, gaussian_count AS gaussianCount, file_size AS fileSize "
-            + "FROM model_3d WHERE deleted = 0 AND psnr IS NOT NULL ORDER BY psnr DESC")
+            + "FROM model_3d WHERE deleted = 0 AND psnr IS NOT NULL "
+            + "AND (remark IS NULL OR remark NOT LIKE '占位记录%') ORDER BY psnr DESC")
     List<Map<String, Object>> modelQuality();
 
     /** 最近 N 天每日统计 */

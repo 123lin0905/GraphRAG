@@ -146,7 +146,7 @@ import BronzeImage from '@/components/BronzeImage.vue'
 import KgGraph from '@/components/KgGraph.vue'
 import { artifactApi, dashboardApi, dictApi, kgApi, routeApi } from '@/api'
 import type { Announcement, Artifact, ExhibitionEvent, GraphVO, NameValue, Overview, Route } from '@/api/types'
-import { fmtNum, ROUTE_TYPE } from '@/utils/format'
+import { ROUTE_TYPE } from '@/utils/format'
 
 const EVENT_TYPE: Record<string, string> = { EXHIBITION: '展览', LECTURE: '讲座', WORKSHOP: '研学', ONLINE: '线上' }
 const treasures = ref<Artifact[]>([])
@@ -161,15 +161,15 @@ const newsItem = ref<Announcement>()
 
 const stats = computed(() => [
   { label: '馆藏精品文物', value: overview.value?.artifactCount ?? '—', unit: '件' },
-  { label: '3DGS 数字模型', value: overview.value?.modelCount ?? '—', unit: '个' },
-  { label: '高斯基元总量', value: overview.value ? fmtNum(overview.value.gaussianTotal).replace(/[万亿]/, '') : '—', unit: overview.value && overview.value.gaussianTotal >= 1e8 ? '亿' : '万' },
+  { label: '可交互三维模型', value: overview.value?.modelCount ?? '—', unit: '个' },
+  { label: 'AI / 程序化复原', value: overview.value?.aiModelCount ?? '—', unit: '个' },
   { label: '图谱实体 / 关系', value: overview.value ? `${overview.value.entityCount}/${overview.value.relationCount}` : '—', unit: '' }
 ])
 
 const features = [
   { icon: 'Box', en: '3D Gaussian Splatting', title: '高斯泼溅数字孪生', to: '/hall3d', cta: '进入 3D 展厅',
-    desc: '多视角影像经 COLMAP 位姿估计与 3DGS 训练，以百万级高斯基元实时还原青铜纹饰与金箔光泽。',
-    points: ['浏览器端实时渲染', 'PSNR / SSIM 质量指标', '展厅—展柜—文物空间层级'] },
+    desc: '统一的三维查看器：真实扫描与 AI 复原网格（GLB）+ 3D 高斯泼溅（splat/ksplat/ply/spz），模型来源逐一标注。',
+    points: ['浏览器端实时渲染', '真实扫描 / AI 复原分组标注', '3DGS 管线：COLMAP → 训练 → PSNR/SSIM'] },
   { icon: 'Share', en: 'Knowledge Graph', title: '三星堆领域知识图谱', to: '/graph', cta: '探索图谱',
     desc: '以“文物—祭祀坑—材质—年代—文化—主题”为骨架，支持 n 跳邻居、最短路径与实体检索。',
     points: ['力导向交互可视化', '最短关联路径', '实体详情联动文物'] },
