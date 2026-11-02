@@ -305,6 +305,10 @@ AI_GLB = [
     (11, '青铜太阳形器 程序化模型', 'taiyang', 'proc', '青铜 PBR'),
     (14, '龟背形网格状器 程序化模型', 'guibei', 'proc', '青铜 PBR'),
     (17, '青铜眼形器 程序化模型', 'yanxing', 'proc', '青铜 PBR'),
+    (6, '黄金面具 AI 复原模型', 'jinmianju', 'ai', '黄金 PBR'),  # 已裁去照片中的展示支架
+    (7, '青铜神坛 AI 复原模型', 'shentan', 'ai', '青铜 PBR'),
+    (8, '铜顶尊跪坐人像 AI 复原模型', 'dingzun', 'ai', '青铜 PBR'),
+    (12, '青铜人头像 AI 复原模型', 'rentouxiang', 'ai', '青铜 PBR'),
 ]
 AI_AUTHOR = {'ai': 'AI 复原（Hunyuan3D-2）', 'proc': '程序化建模'}
 AI_DEVICE = {'ai': 'AI 单图生成（Hunyuan3D-2，输入为文物公开照片）', 'proc': '程序化建模（trimesh 参数化生成）'}
