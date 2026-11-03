@@ -309,9 +309,24 @@ AI_GLB = [
     (7, '青铜神坛 AI 复原模型', 'shentan', 'ai', '青铜 PBR'),
     (8, '铜顶尊跪坐人像 AI 复原模型', 'dingzun', 'ai', '青铜 PBR'),
     (12, '青铜人头像 AI 复原模型', 'rentouxiang', 'ai', '青铜 PBR'),
+    # 以下 4 件以真实文物照片为输入（不用示意封面图），参考照片及来源见 tools/ai3d/refs/SOURCES.md
+    (13, '青铜扭头跪坐人像 AI 复原模型', 'niutou', 'ai_mv', '青铜 PBR'),
+    (15, '青铜龙虎尊 AI 复原模型', 'longhuzun', 'ai_ref', '青铜 PBR'),
+    (16, '青铜兽面 程序化模型（照片浮雕）', 'shoumian', 'relief', '青铜 PBR'),
+    (18, '陶盉 AI 复原模型', 'taohe', 'ai_ref', '陶 PBR'),
 ]
-AI_AUTHOR = {'ai': 'AI 复原（Hunyuan3D-2）', 'proc': '程序化建模'}
-AI_DEVICE = {'ai': 'AI 单图生成（Hunyuan3D-2，输入为文物公开照片）', 'proc': '程序化建模（trimesh 参数化生成）'}
+AI_AUTHOR = {'ai': 'AI 复原（Hunyuan3D-2）', 'proc': '程序化建模',
+             'ai_mv': 'AI 复原（Hunyuan3D-2，参考实物照片）', 'ai_ref': 'AI 复原（Hunyuan3D-2，参考实物照片）', 'relief': '程序化建模'}
+AI_DEVICE = {'ai': 'AI 单图生成（Hunyuan3D-2，输入为文物公开照片）', 'proc': '程序化建模（trimesh 参数化生成）',
+             'ai_mv': 'AI 多视角生成（Hunyuan3D-2mv，输入为实物正面、侧面照片）',
+             'ai_ref': 'AI 单图生成（Hunyuan3D-2，输入为实物照片）',
+             'relief': '程序化建模（照片浮雕：实物照片轮廓挤出 + 亮度浮雕）'}
+REF_NOTE = {
+    13: '；参考照片：Wikimedia Commons 青铜扭头跪坐人像（正面偏侧）、成都金沙遗址博物馆 jinshasitemuseum.com/seardetail/4160（侧面）',
+    15: '；参考照片：jin11.net/2020/04/21/28940/（一号坑实物正面，已抠除底座），肩部虎首细节参考四川在线 sichuan.scol.com.cn/ggxw/202210/58740580.html',
+    16: '；参考照片：Wikimedia Commons File:Sanxingdui_Oct_2007_556.jpg（二号坑铜兽面正面，已抠除亚克力板、支撑和说明牌）',
+    18: '；参考照片：Wikimedia Commons File:三星堆陶盉.jpg（侧面，已去掉亚克力底座）；照片仅见两足，第三足按三足形制复制补全',
+}
 _glb_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'frontend', 'public', 'models', 'glb')
 ai_ids = {x[0] for x in AI_GLB}
 # 有了可交互网格的文物，其占位 3DGS 记录降为非默认，并标注为占位
@@ -322,8 +337,11 @@ models = [m[:21] + ((0,) if m[0] in ai_ids else m[21:22]) + m[22:23]
 for aid, name, fn, kind, mat in AI_GLB:
     fp = os.path.join(_glb_dir, f'{fn}.glb')
     size = os.path.getsize(fp) if os.path.exists(fp) else None
-    remark = ('AI 推测复原（非真实扫描）：Hunyuan3D-2 由文物照片单图生成几何，后处理赋予' if kind == 'ai'
-              else '程序化建模（非真实扫描）：依据公开资料的形制比例参数化生成，赋予') + mat + '材质，仅供教学演示'
+    remark = {'ai': 'AI 推测复原（非真实扫描）：Hunyuan3D-2 由文物照片单图生成几何，后处理赋予',
+              'ai_ref': 'AI 推测复原（非真实扫描）：Hunyuan3D-2 由实物照片单图生成几何，后处理赋予',
+              'ai_mv': 'AI 推测复原（非真实扫描）：Hunyuan3D-2mv 由实物正面、侧面两张照片生成几何，后处理赋予',
+              'relief': '程序化建模（非真实扫描）：照片浮雕法，按实物照片抠出轮廓挤出约 0.4 cm 薄片并按亮度做少量浮雕，赋予',
+              }.get(kind, '程序化建模（非真实扫描）：依据公开资料的形制比例参数化生成，赋予') + mat + '材质，仅供教学演示' + REF_NOTE.get(aid, '')
     models.append((aid, None, name, 'OBJECT', f'/models/glb/{fn}.glb', 'glb', size, None, None, None,
                    AI_DEVICE[kind], None, None, None, None, None, None, None, None, None,
                    f'/static/images/artifacts/{fn if fn != "yanxing" else "yanxingqi"}.jpg', 1, 1,

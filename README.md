@@ -235,11 +235,20 @@ npm run build && npm run preview
 | 青铜太阳形器 | `models/glb/taiyang.glb` | 程序化建模 | 直径约 85 cm：中央凸起阳部、五道芒、外圈晕 |
 | 龟背形网格状器 | `models/glb/guibei.glb` | 程序化建模 | 上下两片网格状椭圆壳体与两侧提手（简化） |
 | 青铜眼形器 | `models/glb/yanxing.glb` | 程序化建模 | 菱形眼形器、凸起眼球与瞳孔 |
+| 黄金面具 | `models/glb/jinmianju.glb` | AI 复原 | Hunyuan3D-2 单图生成（已裁去照片中的展示支架）→ 黄金 PBR |
+| 青铜神坛 | `models/glb/shentan.glb` | AI 复原 | Hunyuan3D-2 单图生成 → 青铜 PBR |
+| 铜顶尊跪坐人像 | `models/glb/dingzun.glb` | AI 复原 | Hunyuan3D-2 单图生成 → 青铜 PBR |
+| 青铜人头像 | `models/glb/rentouxiang.glb` | AI 复原 | Hunyuan3D-2 单图生成 → 青铜 PBR |
+| 青铜扭头跪坐人像 | `models/glb/niutou.glb` | AI 复原（参考实物照片） | Hunyuan3D-2mv 多视角生成：正面偏侧照 `niutou_wiki.jpg` + 侧面照 `niutou_jinsha.jpg`，rembg 抠图去展台 → 青铜 PBR |
+| 青铜龙虎尊 | `models/glb/longhuzun.glb` | AI 复原（参考实物照片） | Hunyuan3D-2 单图生成：一号坑实物正面照 `longhu_jin11.jpg`（rembg 去底座），肩部虎首对照 `longhu_scol.png` 检查 → 青铜 PBR |
+| 青铜兽面 | `models/glb/shoumian.glb` | 程序化建模（照片浮雕） | 薄铜片：由二号坑实物正面照 `shoumian_wm556.jpg` 抠出轮廓（去亚克力板、支撑、说明牌），挤出约 0.4 cm 厚并按亮度做约 0.35 cm 浮雕、轻微弧面（`tools/ai3d/relief.py`）→ 青铜 PBR |
+| 陶盉 | `models/glb/taohe.glb` | AI 复原（参考实物照片） | Hunyuan3D-2 单图生成：侧面照 `taohe_wiki.jpg`（去亚克力底座）；照片只见两足，第三足按三足形制复制补全（`tools/ai3d/taohe_leg.py`）→ 陶 PBR |
 
 - **AI 模型**：[tencent/Hunyuan3D-2](https://huggingface.co/tencent/Hunyuan3D-2)（腾讯混元 3D 2.0 开源模型，经 Hugging Face 免费 ZeroGPU Space 调用），输入为本项目使用的文物公开照片。生成结果是 AI 推测，**不代表文物真实几何**，细节可能与原器不符。
 - **程序化建模**：Python + trimesh 参数化生成，比例依据公开资料中的约数，仅表现基本形制。
 - **材质**：统一后处理赋予青铜（铜绿斑驳）、黄金、玉、象牙、陶的 PBR 参数（metallic / roughness + 顶点色），文件均 ≤ 4 MB。
-- 黄金面具、青铜神坛、铜顶尊跪坐人像、青铜人头像、扭头跪坐人像、龙虎尊、青铜兽面、陶盉等仍在等待 AI 生成（免费 GPU 配额用尽），暂显示“模型采集中”。
+- **参考照片**：扭头跪坐人像、龙虎尊、青铜兽面、陶盉 4 件以真实文物照片为输入（原封面图为示意图，外形与实物不符，未使用），照片存于 `tools/ai3d/refs/`，来源：Wikimedia Commons（青铜扭头跪坐人像词条图、File:Sanxingdui_Oct_2007_556.jpg、File:三星堆陶盉.jpg）、成都金沙遗址博物馆 jinshasitemuseum.com/seardetail/4160、jin11.net/2020/04/21/28940/、四川在线 sichuan.scol.com.cn/ggxw/202210/58740580.html，详见 `tools/ai3d/refs/SOURCES.md`。这 4 件的 `author` 为 `AI 复原（Hunyuan3D-2，参考实物照片）` 或 `程序化建模`，`remark` 中注明参考照片来源。
+- 全部 21 件文物均已有可交互网格模型，展厅与详情页不再出现“模型采集中”；尚未训练的 3DGS 占位记录不在展厅列出。
 - 大屏与首页的模型统计**不计入**占位 3DGS 记录（`remark` 以“占位记录”开头）的演示指标。
 
 ## 七、默认账号

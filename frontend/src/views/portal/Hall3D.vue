@@ -27,7 +27,6 @@
               <i v-if="e.kind === 'real'" class="tag real">真实扫描</i>
               <i v-else-if="e.kind === 'ai'" class="tag ai">{{ e.models[0] && meshKind(e.models[0]) === 'procedural' ? '程序化建模' : 'AI 复原' }}</i>
               <i v-else-if="e.kind === 'splat'" class="tag splat">3DGS</i>
-              <i v-else-if="e.kind === 'pending'" class="tag pending">模型采集中</i>
               <i v-else class="tag demo">技术演示 · 非文物</i>
             </div>
           </button>
@@ -87,14 +86,10 @@
           </dl>
         </template>
 
-        <!-- 3DGS 模型（文件已上线 / 采集中） -->
-        <template v-else-if="cur.kind === 'splat' || cur.kind === 'pending'">
+        <!-- 3DGS 模型（文件已上线） -->
+        <template v-else-if="cur.kind === 'splat'">
           <p class="clamp-3">{{ art?.description || '展厅级 3DGS 场景模型，用于数字孪生漫游与路线导览。' }}</p>
-          <div v-if="cur.kind === 'pending'" class="notice">
-            <el-icon><Camera /></el-icon>
-            <span>该{{ cur.artifactId ? '文物' : '场景' }}的三维模型仍在采集与训练中，暂不提供可交互模型；本系统不会用无关的示例模型代替。</span>
-          </div>
-          <div v-else class="m-grid">
+          <div class="m-grid">
             <div><label>PSNR</label><b>{{ curModel?.psnr ?? '—' }}</b></div>
             <div><label>SSIM</label><b>{{ curModel?.ssim ?? '—' }}</b></div>
             <div><label>LPIPS</label><b>{{ curModel?.lpips ?? '—' }}</b></div>
@@ -152,7 +147,7 @@ import { artifactApi, dictApi } from '@/api'
 import type { Artifact, Model3d } from '@/api/types'
 import { MESH_KIND_LABEL, fmtBytes, fmtNum, isMeshModel, meshKind, sortModels } from '@/utils/format'
 
-type Kind = 'real' | 'ai' | 'splat' | 'pending' | 'demo'
+type Kind = 'real' | 'ai' | 'splat' | 'demo'
 interface Entry { key: string; kind: Kind; title: string; sub: string; cover?: string; artifactId?: number; models: Model3d[] }
 
 const route = useRoute()
@@ -173,7 +168,6 @@ const curModel = computed(() => cur.value?.models[modelIdx.value])
 const groups = computed(() => [
   { kind: 'real', title: '真实三维扫描', items: entries.value.filter((e) => e.kind === 'real' || e.kind === 'splat') },
   { kind: 'ai', title: 'AI 复原模型（非扫描）', items: entries.value.filter((e) => e.kind === 'ai') },
-  { kind: 'pending', title: '模型采集中', items: entries.value.filter((e) => e.kind === 'pending') },
   { kind: 'demo', title: '技术演示', items: entries.value.filter((e) => e.kind === 'demo') }
 ])
 const credits = computed(() =>
@@ -230,12 +224,13 @@ onMounted(async () => {
       continue
     }
     const splats = sortModels(group)
-    const ok = await exists(splats[0].modelUrl)
-    list.push({ key, kind: ok ? 'splat' : 'pending', title, artifactId: aid, models: splats,
+    // 所有文物均已有网格模型；3DGS 文件尚未上线的占位条目不再在展厅列出
+    if (!(await exists(splats[0].modelUrl))) continue
+    list.push({ key, kind: 'splat', title, artifactId: aid, models: splats,
       cover: a?.coverUrl || '/static/images/artifacts/shentan_detail.jpg',
-      sub: ok ? `3DGS · ${(splats[0].format || '').toUpperCase()}` : `${group[0].modelType === 'SCENE' ? '展厅场景' : '单体文物'} · 3DGS 模型采集中` })
+      sub: `3DGS · ${(splats[0].format || '').toUpperCase()}` })
   }
-  const ORDER = ['real', 'splat', 'ai', 'pending']
+  const ORDER = ['real', 'splat', 'ai']
   list.sort((x, y) => ORDER.indexOf(x.kind) - ORDER.indexOf(y.kind) || (x.artifactId || 999) - (y.artifactId || 999))
   list.push({ key: 'demo', kind: 'demo', title: '3DGS 渲染技术演示', sub: '公开示例场景 · 非三星堆文物', models: [], cover: '/static/images/hero.jpg' })
   entries.value = list
@@ -267,7 +262,6 @@ onMounted(async () => {
 .sw-item { display: flex; gap: 12px; align-items: center; padding: 7px 8px; border-radius: 12px; border: 1px solid transparent; background: none; cursor: pointer; text-align: left; color: var(--text-1); transition: all .25s; }
 .sw-item:hover { background: rgba(201,164,92,.06); }
 .sw-item.on { background: linear-gradient(90deg, rgba(201,164,92,.16), rgba(201,164,92,.03)); border-color: var(--line-strong); }
-.sw-item.pending .sw-thumb { filter: grayscale(.85) brightness(.7); }
 .sw-thumb { width: 52px; flex: none; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
 .sw-txt { min-width: 0; display: flex; flex-direction: column; gap: 1px; align-items: flex-start; }
 .sw-txt b { font-family: var(--font-serif); font-size: 15px; letter-spacing: .06em; max-width: 200px; }
@@ -280,7 +274,6 @@ onMounted(async () => {
 .notice.ai .el-icon { color: #b9a6e8; }
 .m-grid b.sm { font-size: 13px; }
 .tag.splat { color: #9fd4bd; border: 1px solid rgba(111,174,149,.35); }
-.tag.pending { color: var(--text-3); border: 1px dashed rgba(201,164,92,.35); }
 .tag.demo { color: #e59a86; border: 1px solid rgba(181,82,59,.4); }
 .sw-foot { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 11px; border: none; border-top: 1px solid var(--line); background: rgba(201,164,92,.05); color: var(--gold-light); cursor: pointer; font-size: 12.5px; letter-spacing: .08em; }
 .sw-foot:hover { background: rgba(201,164,92,.12); }

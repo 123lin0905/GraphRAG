@@ -116,9 +116,9 @@
                     <p class="model-note">{{ curModel?.remark }}</p>
                   </template>
 
-                  <!-- 3DGS：文件未上线时显示“采集中”，不展示演示指标 -->
+                  <!-- 3DGS：文件未上线时提示尚未上线，不展示演示指标 -->
                   <template v-else-if="viewerState === 'pending'">
-                    <div class="pending-badge"><el-icon><Camera /></el-icon>3DGS 模型采集中</div>
+                    <div class="pending-badge"><el-icon><Camera /></el-icon>3DGS 模型尚未上线</div>
                     <p class="model-note">该文物的 3D 高斯泼溅模型尚在采集与训练，模型文件上线后将在此展示真实的训练指标（高斯数量、PSNR、SSIM、LPIPS 等）。</p>
                   </template>
                   <template v-else>
@@ -140,7 +140,7 @@
                     </dl>
                   </template>
                 </template>
-                <el-empty v-else description="该文物暂无三维模型，模型采集中" :image-size="70" />
+                <el-empty v-else description="该文物暂无三维模型" :image-size="70" />
               </aside>
             </div>
           </el-tab-pane>
@@ -233,7 +233,12 @@ const a = computed(() => d.value!.artifact)
 const images = computed(() => (d.value?.images?.length ? d.value.images : d.value ? [{ id: 0, artifactId: a.value.id, imageUrl: a.value.coverUrl || '', imageType: 'PHOTO' }] : []))
 const curImg = computed(() => images.value[curIdx.value]?.imageUrl)
 const curType = computed(() => images.value[curIdx.value]?.imageType || 'PHOTO')
-const models = computed(() => sortModels(d.value?.models || []))
+// 已有网格模型时，不再列出 3DGS 占位记录（文件尚未上线）
+const models = computed(() => {
+  const all = sortModels(d.value?.models || [])
+  const hasMesh = all.some((m) => isMeshModel(m))
+  return hasMesh ? all.filter((m) => isMeshModel(m) || !(m.remark || '').startsWith('占位记录')) : all
+})
 const curModel = computed(() => models.value[modelIdx.value])
 const viewerState = ref('')
 const centerId = computed(() => d.value?.graph?.nodes.find((n) => n.refTable === 'artifact' && n.refId === a.value.id)?.id)

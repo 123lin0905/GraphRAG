@@ -7,3 +7,8 @@
 - `proc.py`：程序化建模（金杖、象牙、玉边璋、太阳形器、龟背形网格状器、眼形器、青铜神树），输出到 `final/`。
 - 依赖：`pip install gradio_client trimesh pyfqmr shapely mapbox_earcut scipy networkx matplotlib`。
 生成结果属于推测性复原，非真实扫描，仅供教学演示。
+- `hymv.py`：调用 `tencent/Hunyuan3D-2mv` 多视角形状生成（front + left 两图）。用法：`python3 hymv.py <name> <front.png> <left.png|-> [steps] [octree]`。
+- `relief.py`：照片浮雕法（薄片文物，如青铜兽面）：抠图 alpha 轮廓挤出薄片厚度 + 按亮度浮雕 + 轻微弧面。用法：`python3 relief.py in_rgba.png out.glb [宽cm] [厚cm] [浮雕cm]`。
+- `taohe_leg.py`：陶盉照片只见两足，复制一足绕竖轴旋转到背面补成三足。
+- `prep/prep.py`：参考照片裁剪 + rembg 抠图（`python3 prep/prep.py u2net`；陶盉用 isnet-general-use 效果更好）。
+- 参考照片与来源：`refs/SOURCES.md`。
